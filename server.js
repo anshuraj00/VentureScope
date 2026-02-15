@@ -4,11 +4,14 @@ const connectDB = require("./config/db");
 
 const app = express();
 
-// Connect Database
 connectDB();
 
 app.use(cors());
 app.use(express.json());
+
+const userRoutes = require("./routes/userRoutes");
+
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
     res.send("VentureScope Backend is Running");

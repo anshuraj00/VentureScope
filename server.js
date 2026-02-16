@@ -1,24 +1,28 @@
 const express = require("express");
-const cors = require("cors");
 const connectDB = require("./config/db");
 
 const app = express();
 
+// Connect database
 connectDB();
 
-app.use(cors());
+// Middleware
 app.use(express.json());
 
-const userRoutes = require("./routes/userRoutes");
-
-app.use("/api/users", userRoutes);
-
+// Test route
 app.get("/", (req, res) => {
-    res.send("VentureScope Backend is Running");
+    res.send("API is running");
 });
 
-const PORT = 5000;
+// User routes
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", userRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Dashboard routes
+const dashboardRoutes = require("./routes/dashboardRoutes");
+app.use("/api/dashboard", dashboardRoutes);
+
+// Start server
+app.listen(5000, () => {
+    console.log("Server running on port 5000");
 });

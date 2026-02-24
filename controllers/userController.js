@@ -3,12 +3,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 
-// Register User
+// ================= REGISTER USER =================
 const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        // Check if user exists
+        // Check existing user
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
@@ -21,7 +21,7 @@ const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create user with hashed password
+        // Create user
         const newUser = new User({
             name,
             email,
@@ -42,12 +42,13 @@ const registerUser = async (req, res) => {
     }
 };
 
-// Login User
+
+// ================= LOGIN USER =================
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
+        // Check user
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -65,18 +66,22 @@ const loginUser = async (req, res) => {
             });
         }
 
+        // ✅ Create JWT Token
+        const token = jwt.sign(
+            { id: user._id },
+            "secretkey",
+            { expiresIn: "1d" }
+        );
+
+        // Send response
         res.status(200).json({
-    message: "Login successful",
-    token: jwt.sign(
-        {
-            id: user._id,
-            email: user.email
-        },
-        "secret123",
-        {
-            expiresIn: "7d"
-        }
-    )
+            message: "Login successful",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
         });
 
     } catch (error) {
@@ -87,6 +92,7 @@ const loginUser = async (req, res) => {
 };
 
 
+// ================= EXPORT =================
 module.exports = {
     registerUser,
     loginUser

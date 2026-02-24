@@ -1,26 +1,30 @@
 const mongoose = require("mongoose");
 
-const ideaSchema = new mongoose.Schema({
+const ideaSchema = new mongoose.Schema(
+{
     title: {
         type: String,
         required: true
     },
+
     description: {
         type: String,
         required: true
     },
+
     category: {
         type: String,
-        required: true
+        default: "General"
     },
-    createdBy: {
+
+    user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+        ref: "User",
+        required: true
     }
-});
+
+},
+{ timestamps: true }
+);
 
 module.exports = mongoose.model("Idea", ideaSchema);

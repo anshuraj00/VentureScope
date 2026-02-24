@@ -1,84 +1,79 @@
 const Idea = require("../models/idea");
 
 
-// Add new idea
+// ================= CREATE IDEA =================
 const createIdea = async (req, res) => {
-
     try {
-
         const { title, description, category } = req.body;
 
-        const newIdea = new Idea({
+        if (!title || !description) {
+            return res.status(400).json({
+                message: "Title and description are required"
+            });
+        }
+
+        const idea = await Idea.create({
             title,
             description,
             category,
-            createdBy: req.user.id
+            user: req.user.id
         });
-
-        await newIdea.save();
 
         res.status(201).json({
             message: "Idea created successfully",
-            idea: newIdea
+            idea
         });
 
     } catch (error) {
-
         res.status(500).json({
-            message: "Server error"
+            message: "Server error",
+            error: error.message
         });
-
     }
-
 };
 
 
 
-// Get all ideas
-const getAllIdeas = async (req, res) => {
-
+// ================= GET ALL IDEAS =================
+const getIdeas = async (req, res) => {
     try {
 
-        const ideas = await Idea.find().populate("createdBy", "name email");
+        const ideas = await Idea.find()
+            .populate("user", "name email")
+            .sort({ createdAt: -1 });
 
         res.status(200).json(ideas);
 
     } catch (error) {
-
         res.status(500).json({
             message: "Server error"
         });
-
     }
-
 };
 
 
 
-// Get my ideas
+// ================= GET MY IDEAS =================
 const getMyIdeas = async (req, res) => {
-
     try {
 
-        const ideas = await Idea.find({ createdBy: req.user.id });
+        const ideas = await Idea.find({
+            user: req.user.id
+        }).sort({ createdAt: -1 });
 
         res.status(200).json(ideas);
 
     } catch (error) {
-
         res.status(500).json({
             message: "Server error"
         });
-
     }
-
 };
 
 
 
-// Delete idea
-const deleteIdea = async (req, res) => {
-
+// ================= UPDATE IDEA =================
+const updateIdea = async (req, res) => {
     try {
 
         const idea = await Idea.findById(req.params.id);
@@ -89,27 +84,72 @@ const deleteIdea = async (req, res) => {
             });
         }
 
-        await idea.deleteOne();
+        // Owner check
+        if (idea.user.toString() !== req.user.id) {
+            return res.status(401).json({
+                message: "Not authorized"
+            });
+        }
 
-        res.status(200).json({
-            message: "Idea deleted successfully"
+        const updatedIdea = await Idea.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+
+        res.json({
+            message: "Idea updated successfully",
+            updatedIdea
         });
 
     } catch (error) {
-
         res.status(500).json({
             message: "Server error"
         });
-
     }
-
 };
 
 
 
+// ================= DELETE IDEA =================
+const deleteIdea = async (req, res) => {
+    try {
+
+        const idea = await Idea.findById(req.params.id);
+
+        if (!idea) {
+            return res.status(404).json({
+                message: "Idea not found"
+            });
+        }
+
+        // Owner check
+        if (idea.user.toString() !== req.user.id) {
+            return res.status(401).json({
+                message: "Not authorized"
+            });
+        }
+
+        await idea.deleteOne();
+
+        res.json({
+            message: "Idea deleted successfully"
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
+
+
+// ================= EXPORT =================
 module.exports = {
     createIdea,
-    getAllIdeas,
+    getIdeas,
     getMyIdeas,
+    updateIdea,
     deleteIdea
 };

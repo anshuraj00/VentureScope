@@ -1,30 +1,30 @@
 const express = require("express");
 const router = express.Router();
 
-const protect = require("../middleware/authMiddleware");
-
 const {
     createIdea,
-    getAllIdeas,
+    getIdeas,
     getMyIdeas,
+    updateIdea,
     deleteIdea
 } = require("../controllers/ideaController");
 
+const protect = require("../middleware/authMiddleware");
 
-// Create idea (protected)
+
+// Create Idea
 router.post("/", protect, createIdea);
 
+// Get All Ideas
+router.get("/", protect, getIdeas);
 
-// Get all ideas (public)
-router.get("/", getAllIdeas);
-
-
-// Get my ideas (protected)
+// Get Logged User Ideas
 router.get("/my", protect, getMyIdeas);
 
+// Update Idea
+router.put("/:id", protect, updateIdea);
 
-// Delete idea (protected)
+// Delete Idea
 router.delete("/:id", protect, deleteIdea);
-
 
 module.exports = router;

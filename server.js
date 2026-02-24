@@ -9,6 +9,9 @@ connectDB();
 // Middleware
 app.use(express.json());
 
+// ⭐ Serve frontend files
+app.use(express.static("public"));
+
 // Routes
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));

@@ -13,11 +13,10 @@ const sendOTP = async (email, otp) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: "VentureScope OTP Verification",
+        subject: "VentureScope Email Verification OTP",
         html: `
-            <h2>Your OTP Code</h2>
-            <h3>${otp}</h3>
-            <p>This OTP is valid for 5 minutes.</p>
+            <h2>Your OTP is: ${otp}</h2>
+            <p>Valid for 5 minutes</p>
         `
     };
 

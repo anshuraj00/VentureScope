@@ -1,12 +1,15 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
+const User = require("../models/user");
+const OTP = require("../models/otpModel");
+const sendOTP = require("../utils/sendMail");
 
-// ================= REGISTER =================
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+
+// ================= SEND OTP =================
 const registerUser = async (req, res) => {
 
     try {
-
-        console.log("REGISTER API HIT ✅");
 
         const { name, email, password } = req.body;
 
@@ -16,7 +19,8 @@ const registerUser = async (req, res) => {
             });
         }
 
-        const existingUser = await User.findOne({ email });
+        const existingUser =
+            await User.findOne({ email });
 
         if (existingUser) {
             return res.status(400).json({
@@ -24,23 +28,31 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword =
-            await bcrypt.hash(password, salt);
+        // ✅ Generate OTP
+        const otp = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
-        const newUser = new User({
-            name,
+        // remove old OTP
+        await OTP.deleteMany({ email });
+
+        // save otp temporarily
+        await OTP.create({
             email,
-            password: hashedPassword
+            otp,
+            name,
+            password,
+            expiresAt:
+                new Date(Date.now() + 5 * 60 * 1000)
         });
 
-        await newUser.save();
+        // send mail
+        await sendOTP(email, otp);
 
-        console.log("USER REGISTERED ✅");
+        console.log("OTP SENT ✅");
 
-        res.status(201).json({
-            message: "Registration Successful"
+        res.status(200).json({
+            message: "OTP Sent Successfully"
         });
 
     } catch (error) {
@@ -54,23 +66,62 @@ const registerUser = async (req, res) => {
 };
 
 
+
 // ================= VERIFY OTP =================
 const verifyOTP = async (req, res) => {
 
     try {
 
-        // Temporary success response
-        res.status(200).json({
-            message: "OTP Verified Successfully"
+        const { email, otp } = req.body;
+
+        const otpData =
+            await OTP.findOne({ email, otp });
+
+        if (!otpData) {
+            return res.status(400).json({
+                message: "Invalid OTP"
+            });
+        }
+
+        if (otpData.expiresAt < new Date()) {
+            return res.status(400).json({
+                message: "OTP Expired"
+            });
+        }
+
+        // ✅ hash password now
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword =
+            await bcrypt.hash(otpData.password, salt);
+
+        // ✅ create user AFTER verification
+        const newUser = new User({
+            name: otpData.name,
+            email: otpData.email,
+            password: hashedPassword
+        });
+
+        await newUser.save();
+
+        // delete otp
+        await OTP.deleteMany({ email });
+
+        console.log("USER VERIFIED ✅");
+
+        res.status(201).json({
+            message: "Email Verified & Registered"
         });
 
     } catch (error) {
+
+        console.log(error);
 
         res.status(500).json({
             message: "Server Error"
         });
     }
 };
+
 
 
 // ================= LOGIN =================
@@ -80,7 +131,8 @@ const loginUser = async (req, res) => {
 
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const user =
+            await User.findOne({ email });
 
         if (!user) {
             return res.status(400).json({
@@ -97,8 +149,16 @@ const loginUser = async (req, res) => {
             });
         }
 
+        // JWT token
+        const token = jwt.sign(
+            { id: user._id },
+            "secretkey",
+            { expiresIn: "1d" }
+        );
+
         res.status(200).json({
-            message: "Login Successful"
+            message: "Login Successful",
+            token
         });
 
     } catch (error) {
@@ -108,6 +168,7 @@ const loginUser = async (req, res) => {
         });
     }
 };
+
 
 
 // ================= EXPORT =================

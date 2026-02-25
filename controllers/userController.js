@@ -1,14 +1,21 @@
-const User = require("../models/user");
+const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
-
-// ================= REGISTER USER =================
+// ================= REGISTER =================
 const registerUser = async (req, res) => {
+
     try {
+
+        console.log("REGISTER API HIT ✅");
+
         const { name, email, password } = req.body;
 
-        // Check existing user
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                message: "All fields required"
+            });
+        }
+
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
@@ -17,11 +24,11 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Hash password
+        // hash password
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword =
+            await bcrypt.hash(password, salt);
 
-        // Create user
         const newUser = new User({
             name,
             email,
@@ -30,25 +37,49 @@ const registerUser = async (req, res) => {
 
         await newUser.save();
 
+        console.log("USER REGISTERED ✅");
+
         res.status(201).json({
-            message: "User registered successfully"
+            message: "Registration Successful"
         });
 
     } catch (error) {
+
+        console.log(error);
+
         res.status(500).json({
-            message: "Server error",
-            error: error.message
+            message: "Server Error"
         });
     }
 };
 
 
-// ================= LOGIN USER =================
-const loginUser = async (req, res) => {
+// ================= VERIFY OTP =================
+const verifyOTP = async (req, res) => {
+
     try {
+
+        // Temporary success response
+        res.status(200).json({
+            message: "OTP Verified Successfully"
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+    }
+};
+
+
+// ================= LOGIN =================
+const loginUser = async (req, res) => {
+
+    try {
+
         const { email, password } = req.body;
 
-        // Check user
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -57,36 +88,23 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Compare password
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch =
+            await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(400).json({
-                message: "Invalid password"
+                message: "Invalid credentials"
             });
         }
 
-        // ✅ Create JWT Token
-        const token = jwt.sign(
-            { id: user._id },
-            "secretkey",
-            { expiresIn: "1d" }
-        );
-
-        // Send response
         res.status(200).json({
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            }
+            message: "Login Successful"
         });
 
     } catch (error) {
+
         res.status(500).json({
-            message: "Server error"
+            message: "Server Error"
         });
     }
 };
@@ -95,5 +113,6 @@ const loginUser = async (req, res) => {
 // ================= EXPORT =================
 module.exports = {
     registerUser,
+    verifyOTP,
     loginUser
 };

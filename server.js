@@ -1,10 +1,17 @@
+require("dotenv").config();
+
 const express = require("express");
 const connectDB = require("./config/db");
+const cors = require("cors");
 
 const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+    credentials: true
+}));
 
 // ✅ Serve frontend
 app.use(express.static("public"));

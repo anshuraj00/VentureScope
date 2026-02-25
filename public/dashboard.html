@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+<div class="navbar">
+<h2 id="welcome"></h2>
+<button class="logout-btn"
+onclick="logoutUser()">Logout</button>
+</div>
+
+<h3>Your Startup Ideas 💡</h3>
+
+<p>Start sharing innovation with world!</p>
+
+</div>
+
+<script src="js/auth.js"></script>
+
+<script>
+checkAuth();
+
+const name =
+localStorage.getItem("userName");
+
+document.getElementById("welcome")
+.innerText="Welcome "+name+" 🚀";
+</script>
+
+</body>
+</html>

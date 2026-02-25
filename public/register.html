@@ -2,41 +2,28 @@
 <html>
 <head>
 <title>Register - VentureScope</title>
-
-<!-- ✅ CSS -->
 <link rel="stylesheet" href="css/style.css">
-
 </head>
 
 <body>
 
-<h2>Register</h2>
-
 <div class="container">
 
-<input type="text"
-id="name"
-placeholder="Enter Name"
-oninput="validateName()">
-<div id="nameError" class="error"></div>
+<h2>Create Account 🚀</h2>
 
-<input type="email"
-id="email"
-placeholder="Enter Email"
-oninput="validateEmail()">
-<div id="emailError" class="error"></div>
+<input id="name" placeholder="Full Name" onblur="validateName()">
+<p id="nameError" class="error"></p>
+
+<input id="email" placeholder="Email" onblur="validateEmail()">
+<p id="emailError" class="error"></p>
 
 <input type="password"
 id="password"
-placeholder="Enter Password"
-oninput="validatePassword()">
-<div id="passwordError" class="error"></div>
+placeholder="Password"
+onblur="validatePassword()">
+<p id="passwordError" class="error"></p>
 
-<br>
-
-<button type="button" onclick="registerUser()">
-Register
-</button>
+<button onclick="registerUser()">Register</button>
 
 <p>
 Already have account?
@@ -45,7 +32,6 @@ Already have account?
 
 </div>
 
-<!-- ✅ JS -->
 <script src="js/auth.js"></script>
 
 </body>

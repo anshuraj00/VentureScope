@@ -194,13 +194,19 @@ async function loginUser() {
 
         if (res.ok) {
 
-            localStorage.setItem("token", data.token);
+    // ✅ Save JWT Token
+    localStorage.setItem("token", data.token);
 
-            alert("Login Successful ✅");
+    // ✅ Save Logged User Name
+    localStorage.setItem(
+        "userName",
+        data.user.name
+    );
 
-            window.location.href = "dashboard.html";
+    alert("Login Successful ✅");
 
-        } else {
+    window.location.href = "dashboard.html";
+} else {
             alert(data.message);
         }
 
@@ -214,4 +220,18 @@ async function loginUser() {
 function logoutUser() {
     localStorage.removeItem("token");
     window.location.href = "login.html";
+}
+
+
+// ================= CHECK LOGIN =================
+function checkAuth() {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+
+        alert("Please login first");
+
+        window.location.href = "login.html";
+    }
 }

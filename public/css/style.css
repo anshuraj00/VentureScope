@@ -113,7 +113,7 @@ button{
 }
 
 button:hover{
-    background:#5a67d8;
+    background:#f0f0f0;
     transform:scale(1.03);
 }
 

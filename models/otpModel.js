@@ -4,11 +4,23 @@ const otpSchema = new mongoose.Schema({
 
     name: String,
 
+    username: String,
+
     password: String,
 
     email: {
         type: String,
         required: true
+    },
+
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+
+    purpose: {
+        type: String,
+        default: 'register' // or 'change-email'
     },
 
     otp: {

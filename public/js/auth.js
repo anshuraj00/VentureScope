@@ -19,6 +19,23 @@ function validateName() {
 }
 
 
+// ================= USERNAME VALIDATION =================
+function validateUsername() {
+    const username = document.getElementById("username").value.trim();
+    const error = document.getElementById("usernameError");
+
+    const regex = /^[a-zA-Z0-9_]{3,20}$/;
+
+    if (!regex.test(username)) {
+        error.innerText = "Username 3-20 chars; letters, numbers, underscores only";
+        return false;
+    }
+
+    error.innerText = "";
+    return true;
+}
+
+
 // ================= EMAIL VALIDATION =================
 function validateEmail() {
 
@@ -62,6 +79,7 @@ async function registerUser() {
 
     if (
         !validateName() ||
+        !validateUsername() ||
         !validateEmail() ||
         !validatePassword()
     ) {
@@ -69,6 +87,7 @@ async function registerUser() {
     }
 
     const name = document.getElementById("name").value.trim();
+    const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
@@ -83,6 +102,7 @@ async function registerUser() {
                 },
                 body: JSON.stringify({
                     name,
+                    username,
                     email,
                     password
                 })

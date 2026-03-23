@@ -2,13 +2,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
 
-/* ===== BODY ===== */
 body{
     margin:0;
-    padding: 85px 0px;
+    padding-top: 85px;
     font-family:'Poppins',sans-serif;
     background:linear-gradient(135deg,#EB4C4C,#FF7070,#FFA6A6,#feda75,#FFEDC7);
     align-items: center;
+    min-height: 100vh;
 }
 
 /* ================= NAVBAR ================= */
@@ -60,95 +60,97 @@ body{
     color:#fdfd5d;
     text-decoration: none;
 }
-
-/* ===== CARD CONTAINER ===== */
+/* Center Container */
 .container{
-    margin: auto;
-    width:350px;
-    background:linear-gradient(280deg,#EB4C4C,#FF7070,#FFA6A6,#feda75,#FFEDC7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding-top: 35px;
+    color: black;
+}
+
+/* Glass Card */
+.login-card{
+    background: linear-gradient(300deg,#EB4C4C,#FF7070,#FFA6A6,#feda75,#FFEDC7);
     backdrop-filter: blur(15px);
     padding:40px;
+    width:350px;
     border-radius:15px;
-    box-shadow:0 10px 40px rgba(0,0,0,0.2);
     text-align:center;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3);
     animation:fadeIn 1s ease;
-    display: block;
-
 }
 
-/* ===== TITLE ===== */
-h2{
-    margin-bottom:20px;
-    color:#333;
+.login-card h2{
+    color:white;
+    margin-bottom:10px;
 }
 
-/* ===== INPUT ===== */
-input{
+.login-card p{
+    color:#ddd;
+    margin-bottom:25px;
+}
+
+/* Inputs */
+.login-card input{
     width:100%;
     padding:12px;
-    margin-top:10px;
+    margin:10px 0;
+    border:none;
     border-radius:8px;
-    border:1px solid #ccc;
     outline:none;
     transition:0.3s;
 }
 
-input:focus{
-    border-color:#667eea;
-    box-shadow:0 0 5px rgba(102,126,234,0.5);
+.login-card input:focus{
+    transform:scale(1.03);
 }
 
-/* ===== BUTTON ===== */
-button{
+/* Button */
+.login-card button{
     width:100%;
     padding:12px;
-    margin-top:20px;
+    margin-top:15px;
     border:none;
     border-radius:8px;
-    background:white;
-    color:black;
-    font-size:16px;
+    background:#fff;
+    color:#764ba2;
+    font-weight:bold;
     cursor:pointer;
     transition:0.3s;
 }
 
-button:hover{
-    background:#5a67d8;
-    transform:scale(1.03);
+.login-card button:hover{
+    background:#764ba2;
+    color:white;
 }
 
-/* ===== LINKS ===== */
-a{
-    color:yellow;
+/* Register link */
+.login-card span{
+    display:block;
+    margin-top:15px;
+    color:white;
+}
+
+.login-card a{
+    color:#ffd369;
     text-decoration:none;
-    font-weight:500;
 }
 
-a:hover{
-    text-decoration:underline;
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* ===== ERROR TEXT ===== */
-.error{
-    color:rgb(179, 5, 5);
-    font-size:12px;
-    text-align:left;
+.content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top:80px;
 }
 
-/* ===== DASHBOARD ===== */
-.dashboard{
-    width:90%;
-    max-width:900px;
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-
-
-
-
-/* FOOTER */
 .footer{
     background:#0f172a;
     color:white;
@@ -159,8 +161,7 @@ a:hover{
     width:100%;
 }
 
-
-/* ===== ANIMATION ===== */
+/* Animation */
 @keyframes fadeIn{
     from{
         opacity:0;

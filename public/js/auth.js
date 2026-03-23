@@ -98,7 +98,9 @@ async function registerUser() {
             // save email for OTP verification
             localStorage.setItem("verifyEmail", email);
 
-            window.location.href = "verify.html";
+            // Hide registration form and show OTP section
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('otpSection').style.display = 'block';
 
         } else {
             document.getElementById("emailError")
@@ -160,6 +162,46 @@ async function verifyOTP() {
 }
 
 
+// ================= RESEND OTP =================
+async function resendOTP() {
+
+    const email = localStorage.getItem("verifyEmail");
+
+    if (!email) {
+        alert("No email found. Please register again.");
+        return;
+    }
+
+    try {
+
+        const res = await fetch(
+            "http://localhost:5000/api/users/register",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email // Only send email for resend
+                })
+            }
+        );
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("OTP Resent to Email ✅");
+        } else {
+            alert(data.message);
+        }
+
+    } catch (err) {
+        console.log(err);
+        alert("Server Connection Error");
+    }
+}
+
+
 // ================= LOGIN =================
 async function loginUser() {
 
@@ -167,10 +209,11 @@ async function loginUser() {
         document.getElementById("email").value.trim();
 
     const password =
-        document.getElementById("password").value;
+        document.getElementById("password").value.trim();
 
+    // ✅ basic validation
     if (!email || !password) {
-        alert("Fill all fields");
+        alert("Please enter email and password");
         return;
     }
 
@@ -192,26 +235,29 @@ async function loginUser() {
 
         const data = await res.json();
 
+        console.log(data); // ✅ debugging
+
         if (res.ok) {
 
-    // ✅ Save JWT Token
-    localStorage.setItem("token", data.token);
+            // ✅ STEP 7.2 (IMPORTANT)
+            localStorage.setItem("token", data.token);
+            localStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
 
-    // ✅ Save Logged User Name
-    localStorage.setItem(
-        "userName",
-        data.user.name
-    );
+            alert("Login Successful ✅");
 
-    alert("Login Successful ✅");
+            window.location.href = "dashboard.html";
 
-    window.location.href = "dashboard.html";
-} else {
-            alert(data.message);
+        } else {
+            alert(data.message || "Login Failed");
         }
 
     } catch (error) {
-        alert("Server Error");
+
+        console.error("LOGIN ERROR:", error);
+        alert("Server not connected");
     }
 }
 

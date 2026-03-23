@@ -1,37 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Dashboard</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | VentureScope</title>
+
+    <!-- CSS FILE -->
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 
 <body>
 
+<!-- ================= NAVBAR ================= -->
+
+<header class="navbar">
+    <div class="logo-section">
+        <img src="images/logo.png" alt="logo">
+        <h2>VentureScope</h2>
+    </div>
+
+    <nav>
+        <a href="#">Dashboard</a>
+        <a href="#">Ideas</a>
+        <a href="#">Profile</a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </nav>
+</header>
+
+
+<!-- ================= DASHBOARD ================= -->
+
 <div class="dashboard">
 
-<div class="navbar">
-<h2 id="welcome"></h2>
-<button class="logout-btn"
-onclick="logoutUser()">Logout</button>
+    <h1>Welcome to VentureScope 🚀</h1>
+    <p>Your Startup Idea Management Platform</p>
+
+    <!-- CARDS -->
+    <div class="card-container">
+        <div class="card">
+            <h3>💡 Submit Idea</h3>
+            <p>Add your startup ideas easily.</p>
+        </div>
+
+        <div class="card">
+            <h3>📊 My Ideas</h3>
+            <p>Manage submitted ideas.</p>
+        </div>
+
+        <div class="card">
+            <h3>👤 Profile</h3>
+            <p>Update account details.</p>
+        </div>
+    </div>
+
+
+    <!-- ================= IDEA FORM ================= -->
+
+    <hr>
+
+    <h2>💡 Create New Idea</h2>
+
+    <form onsubmit="createIdea(event)" class="idea-form">
+        <input type="text" id="title" placeholder="Enter Idea Title" required>
+
+        <textarea id="description" placeholder="Enter Description" required></textarea>
+
+        <input type="text" id="category" placeholder="Category (Optional)">
+
+        <button type="submit">Add Idea</button>
+    </form>
+
+
+    <!-- ================= IDEA LIST ================= -->
+
+    <hr>
+
+    <h2>📊 All Ideas</h2>
+
+    <div id="ideasContainer"></div>
+
 </div>
 
-<h3>Your Startup Ideas 💡</h3>
 
-<p>Start sharing innovation with world!</p>
+<!-- ================= FOOTER ================= -->
 
-</div>
+<footer class="footer">
+    <p>© 2026 VentureScope | Developed by Anshu</p>
+</footer>
 
-<script src="js/auth.js"></script>
+
+<!-- ================= AUTH SCRIPT ================= -->
 
 <script>
-checkAuth();
+    const token = localStorage.getItem("token");
 
-const name =
-localStorage.getItem("userName");
+    if (!token) {
+        alert("Please login first");
+        window.location.href = "login.html";
+    }
 
-document.getElementById("welcome")
-.innerText="Welcome "+name+" 🚀";
+    function logout(){
+        localStorage.removeItem("token");
+        window.location.href="login.html";
+    }
 </script>
+
+<!-- IDEA SCRIPT -->
+<script src="js/idea.js"></script>
 
 </body>
 </html>

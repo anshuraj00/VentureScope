@@ -1,35 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Login - VentureScope</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | VentureScope</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/login.css">
+    <style>
+
+        
+    </style>
 </head>
 
 <body>
 
+<!-- ================= NAVBAR ================= -->
+<header class="navbar">
+    <div class="logo-section">
+        <!-- Put your logo inside images folder -->
+        <img src="images/logo.png" alt="logo">
+        <h2>VentureScope</h2>
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="register.html">Register</a>
+    </nav>
+    
+</header>
+<!-- ================= LOGIN SECTION ================= -->
 <div class="container">
 
-<h2>Login 👋</h2>
+    <form class="login-card"
+          onsubmit="event.preventDefault(); loginUser();">
 
-<input id="email"
-placeholder="Email"
-onblur="validateEmail()">
-<p id="emailError" class="error"></p>
+        <h2>Welcome Back 👋</h2>
+        <p>Login to continue</p>
 
-<input type="password"
-id="password"
-placeholder="Password">
-<p id="passwordError" class="error"></p>
+        <!-- EMAIL -->
+        <input 
+            type="email"
+            id="email"
+            placeholder="Email Address"
+            required
+        >
 
-<button onclick="loginUser()">Login</button>
+        <!-- PASSWORD -->
+        <input 
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+        >
 
-<p>
-New user?
-<a href="register.html">Register</a>
-</p>
+        <!-- LOGIN BUTTON -->
+        <button type="submit">
+            Login
+        </button>
+
+        <span>
+            Don't have an account?
+            <a href="register.html">Register</a>
+        </span>
+
+    </form>
 
 </div>
 
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <p>© 2026 VentureScope | All Rights Reserved</p>
+</footer>
+
+<!-- AUTH JS -->
 <script src="js/auth.js"></script>
 
 </body>

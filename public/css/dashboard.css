@@ -1,0 +1,171 @@
+/* ===== GOOGLE FONT ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#f60707,#f632bb);
+}
+
+/* NAVBAR */
+.navbar{
+    width:100%;
+    height: auto;
+    position:fixed;
+    top:0;
+    left:0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0px 10px;
+    color:white;
+    background: rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    z-index:1000;
+}
+
+.logo{
+    color:white;
+    font-size:22px;
+    font-weight:600;
+}
+
+.logo-section{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+.logo-section img{
+            width:65px;
+        }
+
+
+.navbar a{
+    text-decoration:none;
+    color:white;
+    font-weight:500;
+    transition:0.3s;
+    margin: 5px 15px;
+    
+}
+
+.navbar a:hover{
+    color:#fdfd5d;
+}
+
+.logout-btn{
+    background:#fa0707;
+    color:white;
+    font-weight:500;
+    transition:0.3s;
+    margin: 0px 15px;
+    font-size: medium;
+    border-radius: 20%;
+    padding: 15px;
+    border: 0;
+}
+
+.logout-btn:hover{
+    background:#7b1313;
+}
+
+/* DASHBOARD */
+.dashboard{
+    padding:65px;
+    text-align:center;
+}
+
+.card-container{
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    flex-wrap:wrap;
+    margin-top:30px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    width:250px;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-8px);
+}
+
+/* IDEA FORM */
+.idea-form{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    width:50%;
+    margin:20px auto;
+}
+
+.idea-form input,
+.idea-form textarea{
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+}
+
+.idea-form button{
+    padding:10px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.idea-form button:hover{
+    background:#ca1515;
+}
+
+/* IDEA LIST */
+#ideasContainer{
+    margin-top:30px;
+}
+
+#ideasContainer div{
+    background:white;
+    padding:20px;
+    margin:15px auto;
+    width:60%;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    text-align:left;
+}
+
+#ideasContainer h3{
+    margin:0;
+}
+
+#ideasContainer button{
+    margin-top:10px;
+    padding:6px 12px;
+    background:#ef4444;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+#ideasContainer button:hover{
+    background:#dc2626;
+}
+
+/* FOOTER */
+.footer{
+    background:#0f172a;
+    color:white;
+    text-align:center;
+    padding:5px;
+    position:fixed;
+    bottom:0;
+    width:100%;
+}

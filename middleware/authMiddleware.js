@@ -2,15 +2,17 @@ const jwt = require("jsonwebtoken");
 
 const protect = (req, res, next) => {
 
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({
-            message: "Not authorized"
+            message: "No token provided"
         });
     }
 
     try {
+
+        const token = authHeader.split(" ")[1];  // ✅ FIX HERE
 
         const decoded = jwt.verify(token, "secret123");
 
@@ -25,7 +27,6 @@ const protect = (req, res, next) => {
         });
 
     }
-
 };
 
 module.exports = protect;

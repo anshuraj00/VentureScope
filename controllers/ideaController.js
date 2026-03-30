@@ -12,12 +12,14 @@ const createIdea = async (req, res) => {
             });
         }
 
-        const idea = await Idea.create({
+        const idea = new Idea({
             title,
             description,
             category,
             user: req.user.id
         });
+
+        await idea.save();
 
         res.status(201).json({
             message: "Idea created successfully",
@@ -25,13 +27,12 @@ const createIdea = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("CREATE ERROR:", error);
         res.status(500).json({
-            message: "Server error",
-            error: error.message
+            message: "Server error"
         });
     }
 };
-
 
 
 // ================= GET ALL IDEAS =================
@@ -44,30 +45,29 @@ const getIdeas = async (req, res) => {
         res.status(200).json(ideas);
 
     } catch (error) {
+        console.error("GET ALL ERROR:", error);
         res.status(500).json({
             message: "Server error"
         });
     }
 };
-
 
 
 // ================= GET MY IDEAS =================
 const getMyIdeas = async (req, res) => {
     try {
-        const ideas = await Idea.find({
-            user: req.user.id
-        }).sort({ createdAt: -1 });
+        const ideas = await Idea.find({ user: req.user.id })
+            .sort({ createdAt: -1 });
 
         res.status(200).json(ideas);
 
     } catch (error) {
+        console.error("GET MY ERROR:", error);
         res.status(500).json({
             message: "Server error"
         });
     }
 };
-
 
 
 // ================= GET SINGLE IDEA =================
@@ -85,12 +85,12 @@ const getIdeaById = async (req, res) => {
         res.status(200).json(idea);
 
     } catch (error) {
+        console.error("GET ONE ERROR:", error);
         res.status(500).json({
             message: "Server error"
         });
     }
 };
-
 
 
 // ================= UPDATE IDEA =================
@@ -104,14 +104,12 @@ const updateIdea = async (req, res) => {
             });
         }
 
-        // 🔐 Owner check
         if (idea.user.toString() !== req.user.id) {
             return res.status(401).json({
                 message: "Not authorized"
             });
         }
 
-        // ✅ Controlled update (secure)
         const { title, description, category } = req.body;
 
         idea.title = title || idea.title;
@@ -122,16 +120,16 @@ const updateIdea = async (req, res) => {
 
         res.status(200).json({
             message: "Idea updated successfully",
-            updatedIdea
+            idea: updatedIdea
         });
 
     } catch (error) {
+        console.error("UPDATE ERROR:", error);
         res.status(500).json({
             message: "Server error"
         });
     }
 };
-
 
 
 // ================= DELETE IDEA =================
@@ -145,7 +143,6 @@ const deleteIdea = async (req, res) => {
             });
         }
 
-        // 🔐 Owner check
         if (idea.user.toString() !== req.user.id) {
             return res.status(401).json({
                 message: "Not authorized"
@@ -159,12 +156,12 @@ const deleteIdea = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("DELETE ERROR:", error);
         res.status(500).json({
             message: "Server error"
         });
     }
 };
-
 
 
 // ================= EXPORT =================

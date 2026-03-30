@@ -1,30 +1,32 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-    createIdea,
-    getIdeas,
-    getMyIdeas,
-    updateIdea,
-    deleteIdea
-} = require("../controllers/ideaController");
-
 const protect = require("../middleware/authMiddleware");
 
+const ideaController = require("../controllers/ideaController");
+
+console.log("protect:", typeof protect);
+console.log("createIdea:", typeof ideaController.createIdea);
+
+// ================= ROUTES =================
 
 // Create Idea
-router.post("/", protect, createIdea);
+router.post("/add", protect, ideaController.createIdea);
 
-// Get All Ideas
-router.get("/", protect, getIdeas);
+// Get all ideas
+router.get("/", ideaController.getIdeas);
 
-// Get Logged User Ideas
-router.get("/my", protect, getMyIdeas);
+// Get my ideas
+router.get("/my", protect, ideaController.getMyIdeas);
 
-// Update Idea
-router.put("/:id", protect, updateIdea);
+// Get single idea
+router.get("/:id", ideaController.getIdeaById);
 
-// Delete Idea
-router.delete("/:id", protect, deleteIdea);
+// Update idea
+router.put("/:id", protect, ideaController.updateIdea);
+
+// Delete idea
+router.delete("/:id", protect, ideaController.deleteIdea);
+
 
 module.exports = router;

@@ -3,7 +3,6 @@ console.log("auth.js loaded ✅");
 
 // ================= NAME VALIDATION =================
 function validateName() {
-
     const name = document.getElementById("name").value.trim();
     const error = document.getElementById("nameError");
 
@@ -38,7 +37,6 @@ function validateUsername() {
 
 // ================= EMAIL VALIDATION =================
 function validateEmail() {
-
     const email = document.getElementById("email").value.trim();
     const error = document.getElementById("emailError");
 
@@ -56,7 +54,6 @@ function validateEmail() {
 
 // ================= PASSWORD VALIDATION =================
 function validatePassword() {
-
     const password = document.getElementById("password").value;
     const error = document.getElementById("passwordError");
 
@@ -93,21 +90,18 @@ async function registerUser() {
 
     try {
 
-        const res = await fetch(
-            "http://localhost:5000/api/users/register",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    name,
-                    username,
-                    email,
-                    password
-                })
-            }
-        );
+        const res = await fetch("/api/users/register", {   // ✅ FIXED
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name,
+                username,
+                email,
+                password
+            })
+        });
 
         const data = await res.json();
 
@@ -115,16 +109,13 @@ async function registerUser() {
 
             alert("OTP Sent to Email ✅");
 
-            // save email for OTP verification
             localStorage.setItem("verifyEmail", email);
 
-            // Hide registration form and show OTP section
             document.querySelector('.container').style.display = 'none';
             document.getElementById('otpSection').style.display = 'block';
 
         } else {
-            document.getElementById("emailError")
-                .innerText = data.message;
+            document.getElementById("emailError").innerText = data.message;
         }
 
     } catch (err) {
@@ -147,19 +138,16 @@ async function verifyOTP() {
 
     try {
 
-        const response = await fetch(
-            "http://localhost:5000/api/users/verify-otp",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email,
-                    otp
-                })
-            }
-        );
+        const response = await fetch("/api/users/verify-otp", {   // ✅ FIXED
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email,
+                otp
+            })
+        });
 
         const data = await response.json();
 
@@ -194,18 +182,15 @@ async function resendOTP() {
 
     try {
 
-        const res = await fetch(
-            "http://localhost:5000/api/users/register",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email // Only send email for resend
-                })
-            }
-        );
+        const res = await fetch("/api/users/register", {   // ✅ FIXED
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email
+            })
+        });
 
         const data = await res.json();
 
@@ -225,13 +210,9 @@ async function resendOTP() {
 // ================= LOGIN =================
 async function loginUser() {
 
-    const email =
-        document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    const password =
-        document.getElementById("password").value.trim();
-
-    // ✅ basic validation
     if (!email || !password) {
         alert("Please enter email and password");
         return;
@@ -239,32 +220,25 @@ async function loginUser() {
 
     try {
 
-        const res = await fetch(
-            "http://localhost:5000/api/users/login",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
-        );
+        const res = await fetch("/api/users/login", {   // ✅ FIXED
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email,
+                password
+            })
+        });
 
         const data = await res.json();
 
-        console.log(data); // ✅ debugging
+        console.log(data);
 
         if (res.ok) {
 
-            // ✅ STEP 7.2 (IMPORTANT)
             localStorage.setItem("token", data.token);
-            localStorage.setItem(
-                "user",
-                JSON.stringify(data.user)
-            );
+            localStorage.setItem("user", JSON.stringify(data.user));
 
             alert("Login Successful ✅");
 
@@ -275,7 +249,6 @@ async function loginUser() {
         }
 
     } catch (error) {
-
         console.error("LOGIN ERROR:", error);
         alert("Server not connected");
     }
@@ -291,13 +264,10 @@ function logoutUser() {
 
 // ================= CHECK LOGIN =================
 function checkAuth() {
-
     const token = localStorage.getItem("token");
 
     if (!token) {
-
         alert("Please login first");
-
         window.location.href = "login.html";
     }
 }

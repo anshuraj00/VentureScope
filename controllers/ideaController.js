@@ -12,11 +12,15 @@ const createIdea = async (req, res) => {
             });
         }
 
+        const imagePaths = req.files ? req.files.map(file => file.path.replace(/\\/g, "/")) : [];
+
         const idea = new Idea({
             title,
             description,
             category,
-            user: req.user.id
+            image: imagePaths,
+            user: req.user.id,
+            status: 'pending'
         });
 
         await idea.save();
@@ -38,8 +42,9 @@ const createIdea = async (req, res) => {
 // ================= GET ALL IDEAS =================
 const getIdeas = async (req, res) => {
     try {
-        const ideas = await Idea.find()
-            .populate("user", "name email")
+        const ideas = await Idea.find({ status: 'approved' })
+            .populate("user", "name email username role profileImage")
+            .populate("ratings.user", "name")
             .sort({ createdAt: -1 });
 
         res.status(200).json(ideas);
@@ -56,7 +61,10 @@ const getIdeas = async (req, res) => {
 // ================= GET MY IDEAS =================
 const getMyIdeas = async (req, res) => {
     try {
-        const ideas = await Idea.find({ user: req.user.id })
+        const userId = req.query.userId || req.user.id;
+        const ideas = await Idea.find({ user: userId })
+            .populate("user", "name email username role profileImage")
+            .populate("ratings.user", "name")
             .sort({ createdAt: -1 });
 
         res.status(200).json(ideas);
@@ -69,12 +77,37 @@ const getMyIdeas = async (req, res) => {
     }
 };
 
+// ================= GET FOLLOWED USERS' IDEAS =================
+const getFollowedIdeas = async (req, res) => {
+    try {
+        const user = await require("../models/user").findById(req.user.id);
+        const followedUsers = user.following;
+
+        const ideas = await Idea.find({ 
+            user: { $in: followedUsers },
+            status: 'approved' 
+        })
+            .populate("user", "name email username role profileImage")
+            .populate("ratings.user", "name")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(ideas);
+
+    } catch (error) {
+        console.error("GET FOLLOWED ERROR:", error);
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
 
 // ================= GET SINGLE IDEA =================
 const getIdeaById = async (req, res) => {
     try {
         const idea = await Idea.findById(req.params.id)
-            .populate("user", "name email");
+            .populate("user", "name email username role profileImage")
+            .populate("ratings.user", "name");
 
         if (!idea) {
             return res.status(404).json({
@@ -115,6 +148,11 @@ const updateIdea = async (req, res) => {
         idea.title = title || idea.title;
         idea.description = description || idea.description;
         idea.category = category || idea.category;
+
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(file => file.path.replace(/\\/g, "/"));
+            idea.image = [...(idea.image || []), ...newImages];
+        }
 
         const updatedIdea = await idea.save();
 
@@ -164,12 +202,88 @@ const deleteIdea = async (req, res) => {
 };
 
 
+// ================= GET PENDING IDEAS (ADMIN) =================
+const getPendingIdeas = async (req, res) => {
+    try {
+        const ideas = await Idea.find({ status: 'pending' })
+            .populate("user", "name email")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(ideas);
+
+    } catch (error) {
+        console.error("GET PENDING ERROR:", error);
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
+
+// ================= APPROVE IDEA (ADMIN) =================
+const approveIdea = async (req, res) => {
+    try {
+        const idea = await Idea.findById(req.params.id);
+
+        if (!idea) {
+            return res.status(404).json({
+                message: "Idea not found"
+            });
+        }
+
+        idea.status = 'approved';
+        await idea.save();
+
+        res.status(200).json({
+            message: "Idea approved successfully"
+        });
+
+    } catch (error) {
+        console.error("APPROVE ERROR:", error);
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
+
+// ================= REJECT IDEA (ADMIN) =================
+const rejectIdea = async (req, res) => {
+    try {
+        const idea = await Idea.findById(req.params.id);
+
+        if (!idea) {
+            return res.status(404).json({
+                message: "Idea not found"
+            });
+        }
+
+        idea.status = 'rejected';
+        await idea.save();
+
+        res.status(200).json({
+            message: "Idea rejected successfully"
+        });
+
+    } catch (error) {
+        console.error("REJECT ERROR:", error);
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
+
+
 // ================= EXPORT =================
 module.exports = {
     createIdea,
     getIdeas,
     getMyIdeas,
+    getFollowedIdeas,
     getIdeaById,
     updateIdea,
-    deleteIdea
+    deleteIdea,
+    getPendingIdeas,
+    approveIdea,
+    rejectIdea
 };

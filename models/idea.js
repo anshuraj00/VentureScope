@@ -17,6 +17,48 @@ const ideaSchema = new mongoose.Schema(
         default: "General"
     },
 
+    image: [{
+        type: String // array of image paths
+    }],
+
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+
+    dislikes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+
+    ratings: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        rating: {
+            type: Number,
+            min: 1,
+            max: 5
+        }
+    }],
+
+    comments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment"
+    }],
+
+    averageRating: {
+        type: Number,
+        default: 0
+    },
+
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

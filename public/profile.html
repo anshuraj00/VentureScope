@@ -35,6 +35,7 @@
                 <div class="profile-top-row">
                     <h2 id="profileName">Username</h2>
                     <button class="btn small" id="editProfileBtn" type="button">Edit Profile</button>
+                    <button class="btn small" id="followBtn" type="button" style="display: none;">Follow</button>
                 </div>
                 <p id="profileUsername" class="profile-username">@username</p>
                 <p id="profileBio" class="profile-bio">Your bio appears here. Share something about yourself!</p>
@@ -55,6 +56,26 @@
         <div class="gallery-item">+</div>
         <div class="gallery-item">+</div>
     </section>
+
+    <div id="postModal" class="post-modal" style="display: none;">
+        <div class="post-modal-backdrop" onclick="closeProfileIdeaModal()"></div>
+        <div class="post-modal-card">
+            <button class="post-modal-close" onclick="closeProfileIdeaModal()">✕</button>
+            <div class="post-modal-content">
+                <div class="post-modal-images" id="postModalImages"></div>
+                <div class="post-modal-info">
+                    <div class="post-modal-header">
+                        <h2 id="postModalTitle">Idea Title</h2>
+                        <span id="postModalCategory" class="post-modal-category"></span>
+                    </div>
+                    <p id="postModalDescription">Post description goes here.</p>
+                    <div class="post-modal-meta">
+                        <span id="postModalDate"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <section class="profile-card" id="editSection" style="display: none;">
         <h1>Edit Profile</h1>

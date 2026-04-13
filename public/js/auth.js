@@ -57,12 +57,12 @@ function validatePassword() {
     const password = document.getElementById("password").value;
     const error = document.getElementById("passwordError");
 
-    const regex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    // Require: 6+ chars, at least 1 uppercase, 1 lowercase, 1 number
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
 
     if (!regex.test(password)) {
         error.innerText =
-            "8+ chars, Upper, Lower, Number & Symbol required";
+            "6+ chars, Uppercase, Lowercase & Number required";
         return false;
     }
 
@@ -103,7 +103,10 @@ async function registerUser() {
             })
         });
 
-        const data = await res.json();
+        let data = {};
+        if (res.headers.get('content-type')?.includes('application/json')) {
+            data = await res.json();
+        }
 
         if (res.ok) {
 
@@ -115,7 +118,7 @@ async function registerUser() {
             document.getElementById('otpSection').style.display = 'block';
 
         } else {
-            document.getElementById("emailError").innerText = data.message;
+            document.getElementById("emailError").innerText = data.message || "Registration failed";
         }
 
     } catch (err) {
@@ -149,7 +152,10 @@ async function verifyOTP() {
             })
         });
 
-        const data = await response.json();
+        let data = {};
+        if (response.headers.get('content-type')?.includes('application/json')) {
+            data = await response.json();
+        }
 
         if (response.ok) {
 
@@ -160,7 +166,7 @@ async function verifyOTP() {
             window.location.href = "login.html";
 
         } else {
-            alert(data.message);
+            alert(data.message || "OTP verification failed");
         }
 
     } catch (error) {
@@ -182,7 +188,7 @@ async function resendOTP() {
 
     try {
 
-        const res = await fetch("/api/users/register", {   // ✅ FIXED
+        const res = await fetch("/api/users/resend-otp", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -192,12 +198,15 @@ async function resendOTP() {
             })
         });
 
-        const data = await res.json();
+        let data = {};
+        if (res.headers.get('content-type')?.includes('application/json')) {
+            data = await res.json();
+        }
 
         if (res.ok) {
             alert("OTP Resent to Email ✅");
         } else {
-            alert(data.message);
+            alert(data.message || "Failed to resend OTP");
         }
 
     } catch (err) {
@@ -231,9 +240,10 @@ async function loginUser() {
             })
         });
 
-        const data = await res.json();
-
-        console.log(data);
+        let data = {};
+        if (res.headers.get('content-type')?.includes('application/json')) {
+            data = await res.json();
+        }
 
         if (res.ok) {
 

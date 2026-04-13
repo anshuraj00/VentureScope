@@ -35,6 +35,19 @@
     <h1>Welcome to VentureScope 🚀</h1>
     <p>Your Startup Idea Management Platform</p>
 
+    <!-- SEARCH BAR -->
+    <div class="search-section">
+        <input type="text" id="searchInput" placeholder="Search ideas by title, description, or category...">
+        <button onclick="searchIdeas()">🔍 Search</button>
+    </div>
+
+    <!-- FEED TOGGLE -->
+    <div class="feed-toggle">
+        <button id="allPostsBtn" onclick="loadIdeas()" class="active">All Posts</button>
+        <button id="followedPostsBtn" onclick="loadFollowedIdeas()">Following</button>
+        <button id="suggestionsBtn" onclick="loadSuggestions()">Suggestions</button>
+    </div>
+
     <!-- CARDS -->
     <div class="card-container">
         <div class="card">
@@ -51,6 +64,11 @@
             <h3>👤 Profile</h3>
             <p>Update account details.</p>
         </div>
+
+        <div class="card">
+            <h3>🔔 Notifications</h3>
+            <p>See who liked or commented.</p>
+        </div>
     </div>
 
 
@@ -60,15 +78,46 @@
 
     <h2>💡 Create New Idea</h2>
 
-    <form onsubmit="createIdea(event)" class="idea-form">
+    <form onsubmit="createIdea(event)" class="idea-form" enctype="multipart/form-data">
         <input type="text" id="title" placeholder="Enter Idea Title" required>
 
         <textarea id="description" placeholder="Enter Description" required></textarea>
 
         <input type="text" id="category" placeholder="Category (Optional)">
 
+        <input type="file" id="images" name="images" accept="image/*" multiple>
+
         <button type="submit">Add Idea</button>
     </form>
+
+    <div id="editIdeaSection" style="display: none; margin-top: 2rem;">
+        <hr>
+        <h2>✏️ Edit Idea</h2>
+        <form id="editIdeaForm" class="idea-form" enctype="multipart/form-data" onsubmit="event.preventDefault(); submitIdeaEdit();">
+            <input type="text" id="editTitle" placeholder="Edit Idea Title" required>
+            <textarea id="editDescription" placeholder="Edit Description" required></textarea>
+            <input type="text" id="editCategory" placeholder="Edit Category (Optional)">
+            <input type="file" id="editImages" name="images" accept="image/*" multiple>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <button type="submit">Update Idea</button>
+                <button type="button" onclick="cancelEditIdea()">Cancel</button>
+            </div>
+            <p style="font-size: 0.9rem; color: #444; margin-top: 0.5rem;">Upload new images to add them to the existing idea.</p>
+        </form>
+    </div>
+
+    <!-- ================= NOTIFICATIONS SECTION ================= -->
+
+    <hr>
+
+    <div id="notificationsSection"></div>
+
+
+    <!-- ================= RECOMMENDATIONS SECTION ================= -->
+
+    <hr>
+
+    <div id="recommendationsSection"></div>
 
 
     <!-- ================= IDEA LIST ================= -->
@@ -79,17 +128,44 @@
 
     <div id="ideasContainer"></div>
 
+    <!-- ================= COMMENTS MODAL ================= -->
+    <div id="commentsModal" class="comments-modal" style="display: none;">
+        <div class="comments-modal-backdrop" onclick="closeCommentsModal()"></div>
+        <div class="comments-modal-card">
+            <button class="comments-modal-close" onclick="closeCommentsModal()">✕</button>
+            <div class="comments-modal-header">
+                <h2>Comments</h2>
+            </div>
+            <div class="comments-modal-body" id="commentsModalBody"></div>
+            <div class="comments-modal-footer">
+                <input type="text" id="commentInput" placeholder="Add a comment..." />
+                <button onclick="submitComment()">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ADMIN PANEL ================= -->
+
+    <div id="adminPanel" style="display: none;">
+        <hr>
+        <h2>🛡️ Admin Panel</h2>
+        <div id="pendingIdeasContainer"></div>
+    </div>
+
 </div>
 
 
 <!-- ================= FOOTER ================= -->
 
 <footer class="footer">
-    <p>© 2026 VentureScope | Developed by Anshu</p>
+    <!-- <p>© 2026 VentureScope | Developed by Anshu</p> -->
 </footer>
 
 
-
+<!-- ================= SCRIPTS - LOAD BEFORE INLINE CODE ================= -->
+<script src="js/auth.js"></script>
+<script src="js/idea.js"></script>
+<script src="js/social.js"></script>
 
 <!-- ================= AUTH SCRIPT ================= -->
 
@@ -103,14 +179,19 @@
 
     function logout(){
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         window.location.href="login.html";
     }
+
+    // Load all data on page load
+    window.addEventListener('load', function() {
+        console.log("✅ Page loaded, calling loadIdeas() and checkAdmin()");
+        loadIdeas();
+        loadNotifications();
+        loadRecommendations();
+        checkAdmin();
+    });
 </script>
-
-<script src="js/auth.js"></script>
-
-<!-- IDEA SCRIPT -->
-<script src="js/idea.js"></script>
 
 </body>
 </html>

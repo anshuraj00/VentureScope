@@ -7,15 +7,19 @@ const router = express.Router();
 const {
     registerUser,
     verifyOTP,
+    resendOTP,
     loginUser,
     getProfile,
+    getUserProfile,
     updateProfile,
     requestEmailChange,
     confirmEmailChange,
-    uploadProfileImage
+    uploadProfileImage,
+    followUser,
+    unfollowUser
 } = require("../controllers/userController");
 
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // Multer upload setting
 const uploadDir = path.join(__dirname, "..", "public", "uploads");
@@ -59,7 +63,12 @@ router.post("/login", loginUser);
 
 // Profile
 router.get("/profile", protect, getProfile);
+router.get("/profile/:id", protect, getUserProfile);
 router.put("/profile", protect, updateProfile);
+
+// Follow/Unfollow
+router.post("/follow/:id", protect, followUser);
+router.post("/unfollow/:id", protect, unfollowUser);
 
 // Email change (OTP flow)
 router.post("/profile/change-email-request", protect, requestEmailChange);
@@ -67,5 +76,16 @@ router.post("/profile/change-email-verify", protect, confirmEmailChange);
 
 // Image upload
 router.post("/profile/upload-image", protect, upload.single('profileImage'), uploadProfileImage);
+
+// Resend OTP
+router.post("/resend-otp", resendOTP);
+
+// Check if user is admin
+router.get("/check-admin", protect, (req, res) => {
+    res.status(200).json({
+        isAdmin: req.user.role === 'admin',
+        role: req.user.role
+    });
+});
 
 module.exports = router;

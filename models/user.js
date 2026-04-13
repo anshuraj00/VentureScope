@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+
     // =============== PROFILE FIELDS ===============
     bio: {
         type: String,
@@ -74,6 +80,16 @@ const userSchema = new mongoose.Schema({
             default: ""
         }
     },
+
+    followers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
 
     createdAt: {
         type: Date,

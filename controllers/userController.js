@@ -38,8 +38,11 @@ const registerUser = async (req, res) => {
             100000 + Math.random() * 900000
         ).toString();
 
+        // Hash password before storing in OTP collection (do not store plaintext password)
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         // remove old OTP
-        await OTP.deleteMany({ email });
+        await OTP.deleteMany({ email, purpose: 'register' });
 
         // save otp temporarily
         await OTP.create({
@@ -47,13 +50,21 @@ const registerUser = async (req, res) => {
             otp,
             name,
             username,
-            password,
+            password: hashedPassword,
+            purpose: 'register',
             expiresAt:
                 new Date(Date.now() + 5 * 60 * 1000)
         });
 
         // send mail
-        await sendOTP(email, otp);
+        try {
+            await sendOTP(email, otp);
+        } catch (emailError) {
+            console.error("Failed to send OTP email:", emailError.message);
+            return res.status(500).json({
+                message: "Failed to send OTP email. Please try again."
+            });
+        }
 
         console.log("OTP SENT ✅");
 
@@ -63,7 +74,7 @@ const registerUser = async (req, res) => {
 
     } catch (error) {
 
-        console.log(error);
+        console.error("Registration error:", error);
 
         res.status(500).json({
             message: "Server Error"
@@ -95,17 +106,12 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        // ✅ hash password now
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword =
-            await bcrypt.hash(otpData.password, salt);
-
         // ✅ create user AFTER verification
         const newUser = new User({
             name: otpData.name,
             username: otpData.username,
             email: otpData.email,
-            password: hashedPassword
+            password: otpData.password
         });
 
         await newUser.save();
@@ -129,6 +135,41 @@ const verifyOTP = async (req, res) => {
     }
 };
 
+
+// ================= RESEND OTP =================
+const resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const existing = await OTP.findOne({ email, purpose: 'register' }).sort({ expiresAt: -1 });
+
+        if (!existing) {
+            return res.status(404).json({ message: 'No registration attempt found for this email' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        existing.otp = otp;
+        existing.expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+        await existing.save();
+
+        try {
+            await sendOTP(email, otp);
+        } catch (emailError) {
+            console.error("Failed to resend OTP email:", emailError.message);
+            return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+        }
+
+        return res.status(200).json({ message: 'OTP resent to email' });
+    } catch (error) {
+        console.error("Resend OTP error:", error);
+        return res.status(500).json({ message: 'Server Error' });
+    }
+};
 
 
 // ================= LOGIN =================
@@ -158,18 +199,23 @@ const loginUser = async (req, res) => {
 
         // JWT token
         const token = jwt.sign(
-            { id: user._id },
-            "secret123",
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET || "secret123",
             { expiresIn: "1d" }
         );
+
+        console.log('User from DB:', user);
+        console.log('User role:', user.role);
 
         res.status(200).json({
             message: "Login Successful",
             token,
             user: {
+                _id: user._id,
                 name: user.name,
                 email: user.email,
-                username: user.username
+                username: user.username,
+                role: user.role
             }
         });
 
@@ -193,6 +239,82 @@ const getProfile = async (req, res) => {
         }
 
         res.status(200).json({ user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+const getUserProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if current user is following this user
+        const currentUser = await User.findById(req.user.id);
+        const isFollowing = currentUser.following.includes(userId);
+
+        res.status(200).json({ user, isFollowing });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+const followUser = async (req, res) => {
+    try {
+        const userToFollowId = req.params.id;
+
+        if (req.user.id === userToFollowId) {
+            return res.status(400).json({ message: 'Cannot follow yourself' });
+        }
+
+        const user = await User.findById(req.user.id);
+        const userToFollow = await User.findById(userToFollowId);
+
+        if (!userToFollow) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.following.includes(userToFollowId)) {
+            return res.status(400).json({ message: 'Already following' });
+        }
+
+        user.following.push(userToFollowId);
+        userToFollow.followers.push(req.user.id);
+
+        await user.save();
+        await userToFollow.save();
+
+        res.status(200).json({ message: 'Followed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+const unfollowUser = async (req, res) => {
+    try {
+        const userToUnfollowId = req.params.id;
+
+        const user = await User.findById(req.user.id);
+        const userToUnfollow = await User.findById(userToUnfollowId);
+
+        if (!userToUnfollow) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.following = user.following.filter(id => id.toString() !== userToUnfollowId);
+        userToUnfollow.followers = userToUnfollow.followers.filter(id => id.toString() !== req.user.id);
+
+        await user.save();
+        await userToUnfollow.save();
+
+        res.status(200).json({ message: 'Unfollowed successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
@@ -334,10 +456,14 @@ const updateProfile = async (req, res) => {
 module.exports = {
     registerUser,
     verifyOTP,
+    resendOTP,
     loginUser,
     getProfile,
+    getUserProfile,
     updateProfile,
     requestEmailChange,
     confirmEmailChange,
-    uploadProfileImage
+    uploadProfileImage,
+    followUser,
+    unfollowUser
 };

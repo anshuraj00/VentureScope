@@ -287,6 +287,15 @@ const followUser = async (req, res) => {
         user.following.push(userToFollowId);
         userToFollow.followers.push(req.user.id);
 
+        // Create notification for new follower
+        const Notification = require("../models/notification");
+        const notification = new Notification({
+            recipient: userToFollowId,
+            actor: req.user.id,
+            type: "follow"
+        });
+        await notification.save();
+
         await user.save();
         await userToFollow.save();
 

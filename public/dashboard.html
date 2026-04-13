@@ -48,29 +48,6 @@
         <button id="suggestionsBtn" onclick="loadSuggestions()">Suggestions</button>
     </div>
 
-    <!-- CARDS -->
-    <div class="card-container">
-        <div class="card">
-            <h3>💡 Submit Idea</h3>
-            <p>Add your startup ideas easily.</p>
-        </div>
-
-        <div class="card">
-            <h3>📊 My Ideas</h3>
-            <p>Manage submitted ideas.</p>
-        </div>
-
-        <div class="card">
-            <h3>👤 Profile</h3>
-            <p>Update account details.</p>
-        </div>
-
-        <div class="card">
-            <h3>🔔 Notifications</h3>
-            <p>See who liked or commented.</p>
-        </div>
-    </div>
-
 
     <!-- ================= IDEA FORM ================= -->
 
@@ -144,6 +121,18 @@
         </div>
     </div>
 
+    <!-- ================= NOTIFICATIONS MODAL ================= -->
+    <div id="notificationsModal" class="notifications-modal" style="display: none;">
+        <div class="notifications-modal-backdrop" onclick="closeNotificationsModal()"></div>
+        <div class="notifications-modal-card">
+            <button class="notifications-modal-close" onclick="closeNotificationsModal()">✕</button>
+            <div class="notifications-modal-header">
+                <h2>Notifications</h2>
+            </div>
+            <div class="notifications-modal-body" id="notificationsModalBody"></div>
+        </div>
+    </div>
+
     <!-- ================= ADMIN PANEL ================= -->
 
     <div id="adminPanel" style="display: none;">
@@ -183,6 +172,144 @@
         window.location.href="login.html";
     }
 
+    // Footer navigation functions
+    function scrollToIdeaForm(){
+        const ideaForm = document.querySelector('.idea-form');
+        if(ideaForm){
+            ideaForm.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function loadMyIdeas(){
+        // Load user's own ideas in the feed
+        const token = localStorage.getItem("token");
+        fetch("/api/ideas/my", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(res => res.json())
+        .then(ideas => {
+            const container = document.getElementById("ideasContainer");
+            container.innerHTML = "";
+            const approvedIdeas = ideas.filter(idea => idea.status === 'approved');
+            if(approvedIdeas.length === 0){
+                container.innerHTML = "<p>You haven't posted any approved ideas yet. Create your first one! 🚀</p>";
+            } else {
+                approvedIdeas.forEach(idea => {
+                    const ideaDiv = createIdeaElement(idea);
+                    container.appendChild(ideaDiv);
+                });
+            }
+            // Update active button
+            document.getElementById("allPostsBtn").classList.remove("active");
+            document.getElementById("followedPostsBtn").classList.remove("active");
+            document.getElementById("suggestionsBtn").classList.remove("active");
+        })
+        .catch(error => {
+            console.error("Error loading my ideas:", error);
+            alert("Error loading your ideas");
+        });
+    }
+
+    function goToProfile(){
+        window.location.href = "profile.html";
+    }
+
+    function showNotifications(){
+        loadNotifications();
+        document.getElementById('notificationsModal').style.display = 'flex';
+    }
+
+    function closeNotificationsModal(){
+        document.getElementById('notificationsModal').style.display = 'none';
+    }
+
+    function loadNotifications(){
+        const token = localStorage.getItem("token");
+        fetch("/api/social/notifications", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(res => res.json())
+        .then(notifications => {
+            const container = document.getElementById('notificationsModalBody');
+            container.innerHTML = '';
+
+            if(notifications.length === 0){
+                container.innerHTML = '<p>No notifications yet 🔔</p>';
+                return;
+            }
+
+            notifications.forEach(notification => {
+                const notifDiv = document.createElement('div');
+                notifDiv.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+                notifDiv.onclick = () => markNotificationAsRead(notification._id);
+
+                let message = '';
+                if(notification.type === 'like'){
+                    message = `${notification.actor.name} liked your idea "${notification.idea.title}"`;
+                } else if(notification.type === 'comment'){
+                    message = `${notification.actor.name} commented on your idea "${notification.idea.title}"`;
+                } else if(notification.type === 'follow'){
+                    message = `${notification.actor.name} started following you`;
+                }
+
+                notifDiv.innerHTML = `
+                    <div class="notification-avatar">
+                        <img src="${notification.actor.profileImage ? (notification.actor.profileImage.startsWith('http') ? notification.actor.profileImage : '/uploads/' + notification.actor.profileImage) : '/images/default-avatar.png'}" alt="${notification.actor.name}">
+                    </div>
+                    <div class="notification-content">
+                        <p>${message}</p>
+                        <small>${new Date(notification.createdAt).toLocaleDateString()}</small>
+                    </div>
+                    ${!notification.read ? '<div class="notification-dot"></div>' : ''}
+                `;
+
+                container.appendChild(notifDiv);
+            });
+
+            // Update notification count in footer
+            updateNotificationCount(notifications.filter(n => !n.read).length);
+        })
+        .catch(error => {
+            console.error("Error loading notifications:", error);
+        });
+    }
+
+    function markNotificationAsRead(notificationId){
+        const token = localStorage.getItem("token");
+        fetch(`/api/social/notification/${notificationId}/read`, {
+            method: 'PUT',
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(() => {
+            loadNotifications(); // Reload to update UI
+        })
+        .catch(error => {
+            console.error("Error marking notification as read:", error);
+        });
+    }
+
+    function updateNotificationCount(count){
+        const notifIcon = document.querySelector('.footer-nav-item:nth-child(4) .footer-nav-icon');
+        if(notifIcon){
+            // Remove existing badge
+            const existingBadge = notifIcon.querySelector('.notification-badge');
+            if(existingBadge) existingBadge.remove();
+
+            if(count > 0){
+                const badge = document.createElement('span');
+                badge.className = 'notification-badge';
+                badge.textContent = count > 99 ? '99+' : count;
+                notifIcon.appendChild(badge);
+            }
+        }
+    }
+
     // Load all data on page load
     window.addEventListener('load', function() {
         console.log("✅ Page loaded, calling loadIdeas() and checkAdmin()");
@@ -192,6 +319,26 @@
         checkAdmin();
     });
 </script>
+
+<!-- ================= FOOTER NAVIGATION ================= -->
+<footer class="footer-nav">
+    <div class="footer-nav-item" onclick="scrollToIdeaForm()">
+        <div class="footer-nav-icon">💡</div>
+        <div class="footer-nav-text">Submit</div>
+    </div>
+    <div class="footer-nav-item" onclick="loadMyIdeas()">
+        <div class="footer-nav-icon">📊</div>
+        <div class="footer-nav-text">My Ideas</div>
+    </div>
+    <div class="footer-nav-item" onclick="goToProfile()">
+        <div class="footer-nav-icon">👤</div>
+        <div class="footer-nav-text">Profile</div>
+    </div>
+    <div class="footer-nav-item" onclick="showNotifications()">
+        <div class="footer-nav-icon">🔔</div>
+        <div class="footer-nav-text">Notifications</div>
+    </div>
+</footer>
 
 </body>
 </html>

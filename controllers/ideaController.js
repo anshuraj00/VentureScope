@@ -1,4 +1,6 @@
 const Idea = require("../models/idea");
+const User = require("../models/user");
+const Notification = require("../models/notification");
 
 
 // ================= CREATE IDEA =================
@@ -24,6 +26,18 @@ const createIdea = async (req, res) => {
         });
 
         await idea.save();
+
+        // Create notifications for all admins about pending idea
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            const notification = new Notification({
+                recipient: admin._id,
+                actor: req.user.id,
+                type: "pending-idea",
+                idea: idea._id
+            });
+            await notification.save();
+        }
 
         res.status(201).json({
             message: "Idea created successfully",

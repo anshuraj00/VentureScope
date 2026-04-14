@@ -358,6 +358,32 @@ const markNotificationAsRead = async (req, res) => {
     }
 };
 
+// ================= DELETE NOTIFICATION =================
+const deleteNotification = async (req, res) => {
+    try {
+        const notificationId = req.params.id;
+
+        const notification = await Notification.findById(notificationId);
+
+        if (!notification) {
+            return res.status(404).json({ message: "Notification not found" });
+        }
+
+        // Check if user owns this notification
+        if (notification.recipient.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ message: "Not authorized to delete this notification" });
+        }
+
+        await Notification.findByIdAndDelete(notificationId);
+
+        res.status(200).json({ message: "Notification deleted" });
+
+    } catch (error) {
+        console.error("DELETE NOTIFICATION ERROR:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 // ================= GET USER PROFILE =================
 const getUserProfile = async (req, res) => {
     try {
@@ -400,5 +426,6 @@ module.exports = {
     getRecommendations,
     getNotifications,
     markNotificationAsRead,
+    deleteNotification,
     getUserProfile
 };

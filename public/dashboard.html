@@ -254,6 +254,8 @@
                     message = `${notification.actor.name} commented on your idea "${notification.idea.title}"`;
                 } else if(notification.type === 'follow'){
                     message = `${notification.actor.name} started following you`;
+                } else if(notification.type === 'pending-idea'){
+                    message = `${notification.actor.name} submitted a new idea for approval: "${notification.idea.title}"`;
                 }
 
                 notifDiv.innerHTML = `
@@ -264,7 +266,10 @@
                         <p>${message}</p>
                         <small>${new Date(notification.createdAt).toLocaleDateString()}</small>
                     </div>
-                    ${!notification.read ? '<div class="notification-dot"></div>' : ''}
+                    <div class="notification-actions">
+                        ${!notification.read ? '<div class="notification-dot"></div>' : ''}
+                        <button class="notification-delete-btn" onclick="event.stopPropagation(); deleteNotification('${notification._id}')">🗑️</button>
+                    </div>
                 `;
 
                 container.appendChild(notifDiv);
@@ -291,6 +296,30 @@
         })
         .catch(error => {
             console.error("Error marking notification as read:", error);
+        });
+    }
+
+    function deleteNotification(notificationId){
+        if(!confirm("Are you sure you want to delete this notification?")) return;
+
+        const token = localStorage.getItem("token");
+        fetch(`/api/social/notification/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.message === "Notification deleted"){
+                loadNotifications(); // Reload to update UI
+            } else {
+                alert(data.message || "Error deleting notification");
+            }
+        })
+        .catch(error => {
+            console.error("Error deleting notification:", error);
+            alert("Error deleting notification");
         });
     }
 

@@ -32,6 +32,7 @@ router.get("/recommendations", protect, socialController.getRecommendations);
 // Notifications
 router.get("/notifications", protect, socialController.getNotifications);
 router.put("/notification/:id/read", protect, socialController.markNotificationAsRead);
+router.delete("/notification/:id", protect, socialController.deleteNotification);
 
 // User Profile
 router.get("/user/:id", socialController.getUserProfile);

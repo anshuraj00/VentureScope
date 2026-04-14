@@ -271,23 +271,46 @@ const followUser = async (req, res) => {
 // ================= SEARCH IDEAS =================
 const searchIdeas = async (req, res) => {
     try {
-        const { q } = req.query;
+        const { q, type } = req.query;
 
         if (!q || q.trim() === "") {
             return res.status(400).json({ message: "Search query required" });
         }
 
-        const ideas = await Idea.find({
-            $or: [
-                { title: { $regex: q, $options: "i" } },
-                { description: { $regex: q, $options: "i" } },
-                { category: { $regex: q, $options: "i" } }
-            ]
-        })
-            .populate("user", "name username profileImage")
-            .sort({ createdAt: -1 });
+        let results = {};
 
-        res.status(200).json(ideas);
+        // Search for users
+        if (!type || type === 'all' || type === 'users') {
+            const users = await User.find({
+                $or: [
+                    { name: { $regex: q, $options: "i" } },
+                    { username: { $regex: q, $options: "i" } }
+                ]
+            })
+                .select("name username profileImage bio")
+                .limit(10);
+
+            results.users = users;
+        }
+
+        // Search for ideas
+        if (!type || type === 'all' || type === 'ideas') {
+            const ideas = await Idea.find({
+                status: 'approved',
+                $or: [
+                    { title: { $regex: q, $options: "i" } },
+                    { description: { $regex: q, $options: "i" } },
+                    { category: { $regex: q, $options: "i" } }
+                ]
+            })
+                .populate("user", "name username profileImage")
+                .sort({ createdAt: -1 })
+                .limit(20);
+
+            results.ideas = ideas;
+        }
+
+        res.status(200).json(results);
 
     } catch (error) {
         console.error("SEARCH ERROR:", error);

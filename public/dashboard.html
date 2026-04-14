@@ -37,8 +37,8 @@
 
     <!-- SEARCH BAR -->
     <div class="search-section">
-        <input type="text" id="searchInput" placeholder="Search ideas by title, description, or category...">
-        <button onclick="searchIdeas()">🔍 Search</button>
+        <input type="text" id="searchInput" placeholder="Search for users, posts, or topics...">
+        <button onclick="searchContent()">🔍 Search</button>
     </div>
 
     <!-- FEED TOGGLE -->
@@ -133,6 +133,22 @@
         </div>
     </div>
 
+    <!-- ================= SEARCH RESULTS MODAL ================= -->
+    <div id="searchModal" class="search-modal" style="display: none;">
+        <div class="search-modal-backdrop" onclick="closeSearchModal()"></div>
+        <div class="search-modal-card">
+            <button class="search-modal-close" onclick="closeSearchModal()">✕</button>
+            <div class="search-modal-header">
+                <h2>Search Results</h2>
+                <div class="search-tabs">
+                    <button id="searchTabUsers" onclick="switchSearchTab('users')" class="search-tab active">👥 Users</button>
+                    <button id="searchTabIdeas" onclick="switchSearchTab('ideas')" class="search-tab">💡 Posts</button>
+                </div>
+            </div>
+            <div class="search-modal-body" id="searchModalBody"></div>
+        </div>
+    </div>
+
     <!-- ================= ADMIN PANEL ================= -->
 
     <div id="adminPanel" style="display: none;">
@@ -223,6 +239,107 @@
 
     function closeNotificationsModal(){
         document.getElementById('notificationsModal').style.display = 'none';
+    }
+
+    // Search functions
+    function searchContent(){
+        const query = document.getElementById("searchInput").value.trim();
+
+        if (!query) {
+            alert("Enter a search term");
+            return;
+        }
+
+        performSearch(query);
+        document.getElementById('searchModal').style.display = 'flex';
+    }
+
+    function closeSearchModal(){
+        document.getElementById('searchModal').style.display = 'none';
+    }
+
+    // Allow search on Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchContent();
+        }
+    });
+
+    function switchSearchTab(tab){
+        // Update tab buttons
+        document.getElementById('searchTabUsers').classList.remove('active');
+        document.getElementById('searchTabIdeas').classList.remove('active');
+        document.getElementById('searchTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+        // Show corresponding content
+        const container = document.getElementById('searchModalBody');
+        const usersSection = container.querySelector('.search-users-section');
+        const ideasSection = container.querySelector('.search-ideas-section');
+
+        if (tab === 'users') {
+            usersSection.style.display = 'block';
+            ideasSection.style.display = 'none';
+        } else {
+            usersSection.style.display = 'none';
+            ideasSection.style.display = 'block';
+        }
+    }
+
+    async function performSearch(query){
+        try {
+            const res = await fetch(`/api/social/search?q=${encodeURIComponent(query)}`);
+            const results = await res.json();
+
+            displaySearchResults(results);
+        } catch (error) {
+            console.error("Error searching:", error);
+            alert("Error searching content");
+        }
+    }
+
+    function displaySearchResults(results){
+        const container = document.getElementById('searchModalBody');
+
+        // Users section
+        let usersHtml = '<div class="search-users-section">';
+        if (results.users && results.users.length > 0) {
+            results.users.forEach(user => {
+                const profileImage = user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/' + user.profileImage) : '/images/default-avatar.png';
+                usersHtml += `
+                    <div class="search-user-item" onclick="viewUserProfile('${user._id}')">
+                        <div class="search-user-avatar">
+                            <img src="${profileImage}" alt="${user.name}">
+                        </div>
+                        <div class="search-user-info">
+                            <div class="search-user-name">${user.name}</div>
+                            <div class="search-user-username">@${user.username}</div>
+                            ${user.bio ? `<div class="search-user-bio">${user.bio.length > 50 ? user.bio.slice(0, 50) + '...' : user.bio}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            usersHtml += '<p>No users found</p>';
+        }
+        usersHtml += '</div>';
+
+        // Ideas section
+        let ideasHtml = '<div class="search-ideas-section" style="display: none;">';
+        if (results.ideas && results.ideas.length > 0) {
+            results.ideas.forEach(idea => {
+                const ideaDiv = createIdeaElement(idea);
+                ideasHtml += ideaDiv.outerHTML;
+            });
+        } else {
+            ideasHtml += '<p>No posts found</p>';
+        }
+        ideasHtml += '</div>';
+
+        container.innerHTML = usersHtml + ideasHtml;
+    }
+
+    function viewUserProfile(userId){
+        window.location.href = `profile.html?id=${userId}`;
     }
 
     function loadNotifications(){

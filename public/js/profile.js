@@ -141,6 +141,7 @@ async function fetchProfile() {
         const editBtn = document.getElementById('editProfileBtn');
         const avatarEditBtn = document.getElementById('avatarEditBtn');
         const followBtn = document.getElementById('followBtn');
+        const chatBtn = document.getElementById('chatBtn');
 
         if (!isOwnProfile) {
             if (editBtn) editBtn.style.display = 'none';
@@ -150,8 +151,15 @@ async function fetchProfile() {
                 followBtn.innerText = isFollowing ? 'Unfollow' : 'Follow';
                 followBtn.onclick = () => toggleFollow(userId, isFollowing);
             }
+            if (chatBtn) {
+                chatBtn.style.display = 'inline-block';
+                chatBtn.onclick = () => {
+                    window.location.href = `dashboard.html?chatWith=${userId}`;
+                };
+            }
         } else {
             if (followBtn) followBtn.style.display = 'none';
+            if (chatBtn) chatBtn.style.display = 'none';
         }
 
         setValueIfExists('name', user.name || '');

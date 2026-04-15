@@ -65,6 +65,46 @@ body{
     color:#fff;
 }
 
+.nav-chat-btn {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid #537D5D; /* Make it more visible */
+    padding: 8px 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-chat-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+.chat-icon {
+    font-size: 18px;
+    color: white;
+}
+
+.chat-notification {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 2px solid rgba(0,0,0,0.3);
+}
+
 .logout-btn{
     background:#ff4757;
     color:white;
@@ -1106,6 +1146,370 @@ body{
     margin-bottom: 16px;
 }
 
+/* CHAT MODAL */
+.chat-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.chat-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.chat-modal-card {
+    position: relative;
+    width: min(900px, 100%);
+    height: min(600px, 90vh);
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    border: none;
+    background: rgba(83, 125, 93, 0.15);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.chat-modal-header {
+    padding: 24px 24px 0;
+    border-bottom: 1px solid rgba(83, 125, 93, 0.12);
+}
+
+.chat-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #21321f;
+}
+
+.chat-modal-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.chat-sidebar {
+    width: 300px;
+    border-right: 1px solid rgba(83, 125, 93, 0.12);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-search {
+    padding: 16px;
+    border-bottom: 1px solid rgba(83, 125, 93, 0.12);
+    position: relative;
+}
+
+.chat-search input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    border: 1px solid rgba(83, 125, 93, 0.25);
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+.chat-search-clear {
+    position: absolute;
+    right: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-search-clear:hover {
+    background: rgba(83, 125, 93, 0.1);
+    color: #537D5D;
+}
+
+.chat-users-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-user-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(83, 125, 93, 0.08);
+    transition: background 0.2s ease;
+}
+
+.chat-user-item:hover {
+    background: rgba(83, 125, 93, 0.05);
+}
+
+.chat-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 12px;
+}
+
+.chat-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.chat-user-info {
+    flex: 1;
+}
+
+.chat-user-name {
+    font-weight: 600;
+    color: #21321f;
+    margin-bottom: 2px;
+}
+
+.chat-user-username {
+    font-size: 0.85rem;
+    color: #537D5D;
+    margin-bottom: 2px;
+}
+
+.chat-last-message {
+    font-size: 0.85rem;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-unread-count {
+    background: #537D5D;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.chat-user-item.search-user-item {
+    background: rgba(83, 125, 93, 0.03);
+    border-left: 3px solid #537D5D;
+}
+
+.chat-user-item.search-user-item .chat-last-message {
+    color: #537D5D;
+    font-style: italic;
+}
+
+.chat-user-item.search-user-item:hover {
+    background: rgba(83, 125, 93, 0.08);
+}
+
+.no-conversations, .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    text-align: center;
+}
+
+.chat-placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.chat-placeholder-text {
+    font-size: 1.1rem;
+}
+
+.chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(83, 125, 93, 0.12);
+    background: #f8f7ee;
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.chat-header-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+.chat-header-details {
+    flex: 1;
+}
+
+.chat-header-name {
+    font-weight: 600;
+    color: #21321f;
+}
+
+.chat-header-status {
+    font-size: 0.85rem;
+    color: #537D5D;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    max-width: 70%;
+    margin-bottom: 8px;
+}
+
+.message-own {
+    align-self: flex-end;
+}
+
+.message-other {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 10px 14px;
+    border-radius: 18px;
+    word-wrap: break-word;
+}
+
+.message-own .message-content {
+    background: #537D5D;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message-other .message-content {
+    background: #f0f0f0;
+    color: #21321f;
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 2px;
+}
+
+.message-own .message-time {
+    text-align: right;
+}
+
+.message-other .message-time {
+    text-align: left;
+}
+
+.message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.message-status {
+    font-size: 0.75rem;
+    color: #537D5D;
+    margin-left: 4px;
+}
+
+.chat-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(83, 125, 93, 0.12);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+#messageInput {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid rgba(83, 125, 93, 0.25);
+    border-radius: 24px;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+#sendButton {
+    padding: 12px 20px;
+    border: none;
+    background: #537D5D;
+    color: white;
+    border-radius: 24px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+#sendButton:hover {
+    background: #416848;
+}
+
+.typing-indicator {
+    font-size: 0.85rem;
+    color: #999;
+    font-style: italic;
+    padding: 8px 16px;
+}
+
+.no-conversations {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
 /* COMMENTS SECTION */
 .comment-input{
     width:100%;
@@ -1292,4 +1696,83 @@ hr{
     .comment-btn{
         width:100%;
     }
-}
+}/ *   = = = = = = = = = = = = = = = = =   R A T I N G   S Y S T E M   = = = = = = = = = = = = = = = = =   * / 
+ . v e n t u r e - c a r d - r a t i n g   { 
+         p a d d i n g :   1 2 p x   1 6 p x ; 
+         b o r d e r - t o p :   1 p x   s o l i d   r g b a ( 8 3 ,   1 2 5 ,   9 3 ,   0 . 1 ) ; 
+         b a c k g r o u n d :   r g b a ( 8 3 ,   1 2 5 ,   9 3 ,   0 . 0 2 ) ; 
+         d i s p l a y :   f l e x ; 
+         j u s t i f y - c o n t e n t :   s p a c e - b e t w e e n ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         f l e x - w r a p :   w r a p ; 
+         g a p :   1 0 p x ; 
+ } 
+ 
+ . r a t i n g - d i s p l a y   { 
+         d i s p l a y :   f l e x ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         g a p :   8 p x ; 
+ } 
+ 
+ . s t a r s - d i s p l a y   { 
+         f o n t - s i z e :   1 6 p x ; 
+         c o l o r :   # f f d 7 0 0 ; 
+ } 
+ 
+ . r a t i n g - t e x t   { 
+         f o n t - s i z e :   0 . 8 5 r e m ; 
+         c o l o r :   # 5 3 7 D 5 D ; 
+         f o n t - w e i g h t :   5 0 0 ; 
+ } 
+ 
+ . r a t i n g - i n p u t   { 
+         d i s p l a y :   f l e x ; 
+         a l i g n - i t e m s :   c e n t e r ; 
+         g a p :   8 p x ; 
+ } 
+ 
+ . r a t e - l a b e l   { 
+         f o n t - s i z e :   0 . 8 5 r e m ; 
+         c o l o r :   # 6 6 6 ; 
+         f o n t - w e i g h t :   5 0 0 ; 
+ } 
+ 
+ . s t a r s - i n p u t   { 
+         d i s p l a y :   f l e x ; 
+         g a p :   2 p x ; 
+ } 
+ 
+ . s t a r - i n p u t   { 
+         f o n t - s i z e :   1 8 p x ; 
+         c o l o r :   # d d d ; 
+         c u r s o r :   p o i n t e r ; 
+         t r a n s i t i o n :   c o l o r   0 . 2 s   e a s e ; 
+ } 
+ 
+ . s t a r - i n p u t : h o v e r , 
+ . s t a r - i n p u t . a c t i v e   { 
+         c o l o r :   # f f d 7 0 0 ; 
+ } 
+ 
+ . s t a r - i n p u t : h o v e r   ~   . s t a r - i n p u t   { 
+         c o l o r :   # d d d ; 
+ } 
+ 
+ / *   M o b i l e   r e s p o n s i v e n e s s   f o r   r a t i n g s   * / 
+ @ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   { 
+         . v e n t u r e - c a r d - r a t i n g   { 
+                 f l e x - d i r e c t i o n :   c o l u m n ; 
+                 a l i g n - i t e m s :   f l e x - s t a r t ; 
+                 g a p :   8 p x ; 
+         } 
+         
+         . r a t i n g - d i s p l a y , 
+         . r a t i n g - i n p u t   { 
+                 w i d t h :   1 0 0 % ; 
+         } 
+         
+         . r a t i n g - i n p u t   { 
+                 j u s t i f y - c o n t e n t :   f l e x - s t a r t ; 
+         } 
+ }  
+ 

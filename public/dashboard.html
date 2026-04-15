@@ -23,6 +23,10 @@
         <a href="dashboard.html">Dashboard</a>
         <a href="dashboard.html">Ideas</a>
         <a href="profile.html">Profile</a>
+        <button class="nav-chat-btn" onclick="console.log('Chat button clicked'); openChat()" title="Messages">
+            <span class="chat-icon">💬</span>
+            <span class="chat-notification" id="chatNotificationBadge" style="display: none;"></span>
+        </button>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </nav>
 </header>
@@ -37,7 +41,7 @@
 
     <!-- SEARCH BAR -->
     <div class="search-section">
-        <input type="text" id="searchInput" placeholder="Search for users, posts, or topics...">
+        <input type="text" id="searchInput" placeholder="Search for users, posts, or topics... (searches as you type)">
         <button onclick="searchContent()">🔍 Search</button>
     </div>
 
@@ -149,6 +153,34 @@
         </div>
     </div>
 
+    <!-- ================= CHAT MODAL ================= -->
+    <div id="chatModal" class="chat-modal" style="display: none;">
+        <div class="chat-modal-backdrop" onclick="closeChatModal()"></div>
+        <div class="chat-modal-card">
+            <button class="chat-modal-close" onclick="closeChatModal()">✕</button>
+            <div class="chat-modal-header">
+                <h2>Messages</h2>
+            </div>
+            <div class="chat-modal-body">
+                <div class="chat-sidebar" id="chatSidebar">
+                    <div class="chat-search">
+                        <input type="text" id="chatUserSearch" placeholder="Search users to start chatting..." onkeyup="filterChatUsers()">
+                        <button class="chat-search-clear" onclick="clearChatSearch()" style="display: none;" id="chatSearchClear">✕</button>
+                    </div>
+                    <div class="chat-users-list" id="chatUsersList">
+                        <!-- Conversations will be loaded here -->
+                    </div>
+                </div>
+                <div class="chat-main" id="chatMain">
+                    <div class="chat-placeholder">
+                        <div class="chat-placeholder-icon">💬</div>
+                        <div class="chat-placeholder-text">Select a conversation to start chatting</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= ADMIN PANEL ================= -->
 
     <div id="adminPanel" style="display: none;">
@@ -168,6 +200,7 @@
 
 
 <!-- ================= SCRIPTS - LOAD BEFORE INLINE CODE ================= -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/idea.js"></script>
 <script src="js/social.js"></script>
@@ -258,6 +291,16 @@
         document.getElementById('searchModal').style.display = 'none';
     }
 
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('searchModal').style.display = 'none';
+            document.getElementById('chatModal').style.display = 'none';
+            document.getElementById('commentsModal').style.display = 'none';
+            document.getElementById('notificationsModal').style.display = 'none';
+        }
+    });
+
     // Allow search on Enter key
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -265,78 +308,123 @@
         }
     });
 
-    function switchSearchTab(tab){
-        // Update tab buttons
-        document.getElementById('searchTabUsers').classList.remove('active');
-        document.getElementById('searchTabIdeas').classList.remove('active');
-        document.getElementById('searchTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-
-        // Show corresponding content
-        const container = document.getElementById('searchModalBody');
-        const usersSection = container.querySelector('.search-users-section');
-        const ideasSection = container.querySelector('.search-ideas-section');
-
-        if (tab === 'users') {
-            usersSection.style.display = 'block';
-            ideasSection.style.display = 'none';
-        } else {
-            usersSection.style.display = 'none';
-            ideasSection.style.display = 'block';
+    // Add live search functionality
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        if (query.length >= 2) {
+            // Debounce search - wait 300ms after user stops typing
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+                document.getElementById('searchModal').style.display = 'flex';
+            }, 300);
+        } else if (query.length === 0) {
+            // Close modal if search is cleared
+            document.getElementById('searchModal').style.display = 'none';
         }
-    }
+    });
 
-    async function performSearch(query){
+    // Chat search functionality - now searches all users, not just conversations
+    let allUsers = []; // Store all users for search
+    let chatSearchTimeout;
+
+    document.getElementById('chatUserSearch').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+
+        // Clear previous timeout
+        clearTimeout(chatSearchTimeout);
+
+        if (query.length >= 2) {
+            // Debounce search - wait 300ms after user stops typing
+            chatSearchTimeout = setTimeout(() => {
+                searchChatUsers(query);
+            }, 300);
+        } else if (query.length === 0) {
+            // Show conversations when search is cleared
+            loadConversations();
+        }
+    });
+
+    async function searchChatUsers(query) {
         try {
-            const res = await fetch(`/api/social/search?q=${encodeURIComponent(query)}`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`/api/social/search?q=${encodeURIComponent(query)}&type=users`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
             const results = await res.json();
 
-            displaySearchResults(results);
+            if (!res.ok) {
+                console.error('Search failed:', results.message);
+                return;
+            }
+
+            displayChatUserSearchResults(results.users || []);
         } catch (error) {
-            console.error("Error searching:", error);
-            alert("Error searching content");
+            console.error('Error searching users:', error);
         }
     }
 
-    function displaySearchResults(results){
-        const container = document.getElementById('searchModalBody');
+    function displayChatUserSearchResults(users) {
+        const container = document.getElementById('chatUsersList');
+        container.innerHTML = '';
 
-        // Users section
-        let usersHtml = '<div class="search-users-section">';
-        if (results.users && results.users.length > 0) {
-            results.users.forEach(user => {
-                const profileImage = user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/' + user.profileImage) : '/images/default-avatar.png';
-                usersHtml += `
-                    <div class="search-user-item" onclick="viewUserProfile('${user._id}')">
-                        <div class="search-user-avatar">
-                            <img src="${profileImage}" alt="${user.name}">
-                        </div>
-                        <div class="search-user-info">
-                            <div class="search-user-name">${user.name}</div>
-                            <div class="search-user-username">@${user.username}</div>
-                            ${user.bio ? `<div class="search-user-bio">${user.bio.length > 50 ? user.bio.slice(0, 50) + '...' : user.bio}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            usersHtml += '<p>No users found</p>';
+        if (users.length === 0) {
+            container.innerHTML = '<div class="no-results">No users found</div>';
+            return;
         }
-        usersHtml += '</div>';
 
-        // Ideas section
-        let ideasHtml = '<div class="search-ideas-section" style="display: none;">';
+        // Get current user ID to exclude self
+        const currentUser = JSON.parse(localStorage.getItem("user"));
+        const filteredUsers = users.filter(user => user._id !== currentUser._id);
+
+        filteredUsers.forEach(user => {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'chat-user-item';
+            userDiv.onclick = () => openChatWithUser(user._id);
+
+            const profileImage = user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/' + user.profileImage) : '/images/default-avatar.png';
+
+            userDiv.innerHTML = `
+                <div class="chat-user-avatar">
+                    <img src="${profileImage}" alt="${user.name}" onerror="this.src='/images/default-avatar.png'">
+                </div>
+                <div class="chat-user-info">
+                    <div class="chat-user-name">${user.name}</div>
+                    <div class="chat-user-username">@${user.username}</div>
+                    <div class="chat-last-message">${user.bio ? user.bio.slice(0, 30) + (user.bio.length > 30 ? '...' : '') : 'Send a message'}</div>
+                </div>
+            `;
+
+            container.appendChild(userDiv);
+        });
+    }
+
+    function filterChatUsers(){
+        // This function is now deprecated - we use search instead
+        // But keep it for backward compatibility
+        const searchTerm = document.getElementById('chatUserSearch').value.toLowerCase().trim();
+        if (searchTerm.length < 2) {
+            loadConversations();
+        }
+    }
         if (results.ideas && results.ideas.length > 0) {
             results.ideas.forEach(idea => {
                 const ideaDiv = createIdeaElement(idea);
                 ideasHtml += ideaDiv.outerHTML;
             });
         } else {
-            ideasHtml += '<p>No posts found</p>';
+            ideasHtml += '<div style="text-align: center; padding: 20px; color: #666;">No posts found</div>';
         }
         ideasHtml += '</div>';
 
         container.innerHTML = usersHtml + ideasHtml;
-    }
 
     function viewUserProfile(userId){
         window.location.href = `profile.html?id=${userId}`;
@@ -456,6 +544,568 @@
         }
     }
 
+    // ================= CHAT FUNCTIONS =================
+    let socket;
+    let currentChatUser = null;
+    let typingTimeout;
+
+    function openChat(){
+        console.log('openChat function called');
+        alert('Chat button clicked!'); // Temporary test alert
+        
+        // Check if user is logged in
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log('No token found, user not logged in');
+            alert("Please login first to use chat");
+            window.location.href = "login.html";
+            return;
+        }
+        
+        document.getElementById('chatModal').style.display = 'flex';
+        console.log('Chat modal display set to flex');
+        
+        // Clear notification badge when opening chat
+        updateChatNotificationBadge(0);
+        
+        // Re-initialize chat if socket is not connected
+        if(!socket || !socket.connected) {
+            console.log('Socket not connected, initializing chat');
+            initializeChat();
+        } else {
+            console.log('Socket connected, loading conversations');
+            // Just reload conversations if already connected
+            loadConversations();
+        }
+    }
+
+    function closeChatModal(){
+        document.getElementById('chatModal').style.display = 'none';
+        if(socket) socket.disconnect();
+    }
+
+    function initializeChat(){
+        const token = localStorage.getItem("token");
+        if(!token) return;
+
+        // Initialize Socket.IO with explicit server URL
+        socket = io('http://localhost:5000');
+        console.log('Socket.IO initialized, attempting connection...');
+
+        // Get current user ID
+        const user = JSON.parse(localStorage.getItem("user"));
+        if(user && user._id){
+            console.log('User found, joining room:', user._id);
+            socket.emit('join', user._id);
+        } else {
+            console.log('No user found in localStorage');
+        }
+
+        // Load conversations
+        loadConversations();
+
+        // Set up socket listeners
+        socket.on('connect', () => {
+            console.log('Connected to chat server successfully!');
+            console.log('Socket ID:', socket.id);
+            updateChatStatus();
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket.IO connection error:', error);
+            updateChatStatus();
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from chat server');
+            updateChatStatus();
+        });
+
+        socket.on('receive_message', (message) => {
+            console.log('Received message:', message);
+            if(currentChatUser && currentChatUser._id === message.sender._id){
+                displayMessage(message);
+                // Auto-mark as read when received and chat is open
+                markMessagesAsRead(message.sender._id);
+            } else {
+                // Update notification badge for new messages when chat is not open
+                updateChatNotificationBadgeForNewMessage();
+            }
+            // Refresh conversations to show new message
+            loadConversations();
+        });
+
+        socket.on('message_sent', (message) => {
+            console.log('Message sent confirmation:', message);
+            // Display the sent message in our chat
+            if(currentChatUser && currentChatUser._id === message.receiver._id){
+                displayMessage(message);
+            }
+        });
+
+        socket.on('message_error', (error) => {
+            console.error('Message send error:', error);
+            alert('Failed to send message: ' + error.message);
+        });
+
+        socket.on('user_typing', (data) => {
+            if(currentChatUser && currentChatUser._id === data.senderId){
+                showTypingIndicator(data.isTyping);
+            }
+        });
+
+        socket.on('user_online', (data) => {
+            updateUserStatus(data.userId, true);
+        });
+
+        socket.on('user_offline', (data) => {
+            updateUserStatus(data.userId, false);
+        });
+    }
+
+    function updateUserStatus(userId, isOnline) {
+        // Update status in conversations list
+        const userItems = document.querySelectorAll('.chat-user-item');
+        userItems.forEach(item => {
+            // We need to check if this item corresponds to the user
+            // For now, we'll update the current chat user status
+            if(currentChatUser && currentChatUser._id === userId) {
+                const statusEl = document.getElementById('chatStatus');
+                if(statusEl) {
+                    statusEl.textContent = isOnline ? 'Online' : 'Offline';
+                    statusEl.style.color = isOnline ? '#537D5D' : '#666';
+                }
+            }
+        });
+    }
+
+    async function loadConversations(){
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch('/api/chat/conversations', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            const conversations = await res.json();
+
+            displayConversations(conversations);
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+        }
+    }
+
+    function displayConversations(conversations){
+        const container = document.getElementById('chatUsersList');
+        container.innerHTML = '';
+
+        if(conversations.length === 0){
+            container.innerHTML = '<div class="no-conversations">No conversations yet. Start chatting with someone!</div>';
+            updateChatNotificationBadge(0);
+            return;
+        }
+
+        // Calculate total unread messages for notification badge
+        const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+        updateChatNotificationBadge(totalUnread);
+
+        conversations.forEach(conv => {
+            const convDiv = document.createElement('div');
+            convDiv.className = 'chat-user-item';
+            convDiv.onclick = () => openChatWithUser(conv.userId);
+
+            const profileImage = conv.user.profileImage ? (conv.user.profileImage.startsWith('http') ? conv.user.profileImage : '/uploads/' + conv.user.profileImage) : '/images/default-avatar.png';
+
+            convDiv.innerHTML = `
+                <div class="chat-user-avatar">
+                    <img src="${profileImage}" alt="${conv.user.name}">
+                </div>
+                <div class="chat-user-info">
+                    <div class="chat-user-name">${conv.user.name}</div>
+                    <div class="chat-user-username">@${conv.user.username}</div>
+                    <div class="chat-last-message">${conv.lastMessage ? (conv.lastMessage.content.length > 30 ? conv.lastMessage.content.slice(0, 30) + '...' : conv.lastMessage.content) : 'No messages yet'}</div>
+                </div>
+                ${conv.unreadCount > 0 ? `<div class="chat-unread-count">${conv.unreadCount}</div>` : ''}
+            `;
+
+            container.appendChild(convDiv);
+        });
+    }
+
+    function updateChatNotificationBadge(count) {
+        const badge = document.getElementById('chatNotificationBadge');
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function updateChatNotificationBadgeForNewMessage() {
+        const badge = document.getElementById('chatNotificationBadge');
+        const chatModal = document.getElementById('chatModal');
+        
+        // Only update badge if chat modal is not currently open
+        if (chatModal.style.display !== 'flex') {
+            const currentCount = badge.style.display === 'none' ? 0 : parseInt(badge.textContent) || 0;
+            const newCount = currentCount + 1;
+            updateChatNotificationBadge(newCount);
+        }
+    }
+
+    async function openChatWithUser(userId){
+        console.log('Opening chat with user:', userId);
+        try {
+            const token = localStorage.getItem("token");
+
+            // Get user details first
+            const userRes = await fetch(`/api/users/profile/${userId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (!userRes.ok) {
+                console.error('Failed to fetch user profile, status:', userRes.status);
+                alert('Could not load user details');
+                return;
+            }
+
+            const userData = await userRes.json();
+            const userDetails = userData.user;
+            console.log('Fetched user details:', userDetails.name);
+
+            // Now get messages (will be empty if no conversation exists)
+            let messages = [];
+            try {
+                const messagesRes = await fetch(`/api/chat/messages/${userId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                if (messagesRes.ok) {
+                    messages = await messagesRes.json();
+                    console.log('Loaded messages:', messages.length);
+                } else {
+                    console.log('No existing messages, starting new conversation');
+                }
+            } catch (error) {
+                console.log('No existing conversation, starting new one');
+            }
+
+            // Set current chat user and display interface
+            currentChatUser = userDetails;
+            console.log('Displaying chat interface for:', userDetails.name);
+            displayChatInterface(messages);
+
+            // Mark messages as read if there are any
+            if(messages.length > 0) {
+                markMessagesAsRead(userDetails._id);
+            }
+
+        } catch (error) {
+            console.error('Error opening chat:', error);
+            alert('Error opening chat');
+        }
+    }
+
+    function displayChatInterface(messages){
+        const chatMain = document.getElementById('chatMain');
+        const profileImage = currentChatUser.profileImage ? (currentChatUser.profileImage.startsWith('http') ? currentChatUser.profileImage : '/uploads/' + currentChatUser.profileImage) : '/images/default-avatar.png';
+
+        chatMain.innerHTML = `
+            <div class="chat-header">
+                <div class="chat-user-info">
+                    <img src="${profileImage}" alt="${currentChatUser.name}" class="chat-header-avatar">
+                    <div class="chat-header-details">
+                        <div class="chat-header-name">${currentChatUser.name}</div>
+                        <div class="chat-header-status" id="chatStatus">Connecting...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                ${messages.map(msg => createMessageElement(msg)).join('')}
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="handleMessageKeyPress(event)">
+                <button onclick="sendMessage()" id="sendButton">Send</button>
+            </div>
+        `;
+
+        // Scroll to bottom
+        const messagesContainer = document.getElementById('chatMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Focus on input
+        setTimeout(() => {
+            const input = document.getElementById('messageInput');
+            if(input) input.focus();
+        }, 100);
+
+        // Update connection status
+        updateChatStatus();
+    }
+
+    function updateChatStatus(){
+        const statusEl = document.getElementById('chatStatus');
+        if(!statusEl) return;
+
+        if(socket && socket.connected){
+            statusEl.textContent = 'Online';
+            statusEl.style.color = '#537D5D';
+        } else {
+            statusEl.textContent = 'Connecting...';
+            statusEl.style.color = '#ff6b6b';
+        }
+    }
+
+    function createMessageElement(message){
+        const user = JSON.parse(localStorage.getItem("user"));
+        // Handle both populated message objects and simple message data
+        const senderId = message.sender._id || message.sender;
+        const isOwnMessage = senderId === user._id;
+        const time = new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        let statusIcon = '';
+        if(isOwnMessage) {
+            if(message.read) {
+                statusIcon = '✓✓'; // Read
+            } else if(message.delivered) {
+                statusIcon = '✓'; // Delivered
+            } else {
+                statusIcon = '○'; // Sent
+            }
+        }
+
+        return `
+            <div class="message ${isOwnMessage ? 'message-own' : 'message-other'}">
+                <div class="message-content">${message.content}</div>
+                <div class="message-footer">
+                    <span class="message-time">${time}</span>
+                    ${statusIcon ? `<span class="message-status">${statusIcon}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function displayMessage(message){
+        const messagesContainer = document.getElementById('chatMessages');
+        if(messagesContainer){
+            const messageElement = createMessageElement(message);
+            messagesContainer.insertAdjacentHTML('beforeend', messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    function handleMessageKeyPress(event){
+        if(event.key === 'Enter'){
+            sendMessage();
+        } else {
+            // Handle typing indicator
+            if(socket && currentChatUser){
+                socket.emit('typing', {
+                    senderId: JSON.parse(localStorage.getItem("user"))._id,
+                    receiverId: currentChatUser._id,
+                    isTyping: true
+                });
+
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    socket.emit('typing', {
+                        senderId: JSON.parse(localStorage.getItem("user"))._id,
+                        receiverId: currentChatUser._id,
+                        isTyping: false
+                    });
+                }, 1000);
+            }
+        }
+    }
+
+    function sendMessage(){
+        console.log('sendMessage called');
+        const input = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const content = input.value.trim();
+
+        console.log('Content:', content);
+        console.log('Current chat user:', currentChatUser);
+        console.log('Socket connected:', socket && socket.connected);
+
+        if(!content || !currentChatUser) {
+            console.log('Missing content or chat user');
+            return;
+        }
+
+        // Check if socket is connected
+        if(!socket || !socket.connected) {
+            console.log('Socket not connected');
+            alert('Chat connection lost. Please refresh the page.');
+            return;
+        }
+
+        const user = JSON.parse(localStorage.getItem("user"));
+        console.log('Sending message from user:', user._id, 'to:', currentChatUser._id);
+
+        // Disable input and button while sending
+        input.disabled = true;
+        if(sendButton) sendButton.disabled = true;
+
+        // Create message object for immediate display
+        const messageData = {
+            sender: user,
+            receiver: currentChatUser,
+            content: content,
+            messageType: 'text',
+            createdAt: new Date().toISOString()
+        };
+
+        // Display message immediately
+        displayMessage(messageData);
+
+        // Send via socket
+        console.log('Emitting private_message event with data:', {
+            senderId: user._id,
+            receiverId: currentChatUser._id,
+            content: content
+        });
+        socket.emit('private_message', {
+            senderId: user._id,
+            receiverId: currentChatUser._id,
+            content: content,
+            messageType: 'text'
+        });
+        console.log('Message emitted to socket');
+
+        input.value = '';
+
+        // Re-enable input and button
+        input.disabled = false;
+        if(sendButton) sendButton.disabled = false;
+        input.focus();
+
+        // Refresh conversations to show updated last message
+        setTimeout(() => loadConversations(), 100);
+    }
+
+    function showTypingIndicator(isTyping){
+        const chatMain = document.getElementById('chatMain');
+        let typingIndicator = chatMain.querySelector('.typing-indicator');
+
+        if(isTyping){
+            if(!typingIndicator){
+                typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                typingIndicator.innerHTML = `${currentChatUser.name} is typing...`;
+                chatMain.querySelector('.chat-messages').appendChild(typingIndicator);
+            }
+        } else {
+            if(typingIndicator){
+                typingIndicator.remove();
+            }
+        }
+    }
+
+    function filterChatUsers(){
+        const searchTerm = document.getElementById('chatUserSearch').value.toLowerCase().trim();
+        const clearBtn = document.getElementById('chatSearchClear');
+
+        if (!searchTerm) {
+            // Show conversations if search is empty
+            if (clearBtn) clearBtn.style.display = 'none';
+            loadConversations();
+            return;
+        }
+
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        // Search for all users when there's a search term
+        searchAllUsers(searchTerm);
+    }
+
+    async function searchAllUsers(searchTerm) {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`/api/social/search?q=${encodeURIComponent(searchTerm)}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            const results = await res.json();
+
+            if (!res.ok) {
+                console.error('Search failed:', results.message);
+                return;
+            }
+
+            displayUserSearchResults(results.users || []);
+        } catch (error) {
+            console.error('Error searching users:', error);
+        }
+    }
+
+    function displayUserSearchResults(users) {
+        const container = document.getElementById('chatUsersList');
+        container.innerHTML = '';
+
+        if (users.length === 0) {
+            container.innerHTML = '<div class="no-conversations">No users found</div>';
+            return;
+        }
+
+        users.forEach(user => {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'chat-user-item search-user-item';
+            userDiv.onclick = () => openChatWithUser(user._id);
+
+            const profileImage = user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/' + user.profileImage) : '/images/default-avatar.png';
+
+            userDiv.innerHTML = `
+                <div class="chat-user-avatar">
+                    <img src="${profileImage}" alt="${user.name}" onerror="this.src='/images/default-avatar.png'">
+                </div>
+                <div class="chat-user-info">
+                    <div class="chat-user-name">${user.name}</div>
+                    <div class="chat-user-username">@${user.username}</div>
+                    <div class="chat-last-message">Click to start conversation</div>
+                </div>
+            `;
+
+            container.appendChild(userDiv);
+        });
+    }
+
+    function clearChatSearch(){
+        document.getElementById('chatUserSearch').value = '';
+        document.getElementById('chatSearchClear').style.display = 'none';
+        loadConversations(); // Reload conversations when search is cleared
+    }
+
+    function initializeChatBadge() {
+        // Load conversations to get initial unread count for badge
+        loadConversations();
+    }
+
+    async function markMessagesAsRead(userId) {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/chat/messages/${userId}/read`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            
+            if(response.ok) {
+                console.log('Messages marked as read');
+                // Refresh conversations to update unread counts
+                loadConversations();
+            }
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    }
+
     // Load all data on page load
     window.addEventListener('load', function() {
         console.log("✅ Page loaded, calling loadIdeas() and checkAdmin()");
@@ -463,6 +1113,22 @@
         loadNotifications();
         loadRecommendations();
         checkAdmin();
+        
+        // Initialize chat notification badge
+        initializeChatBadge();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatWithId = urlParams.get('chatWith');
+        if (chatWithId) {
+            // Wait for chat to be initialized before opening specific conversation
+            setTimeout(() => {
+                openChat();
+                // Wait a bit more for the modal to be fully rendered
+                setTimeout(() => {
+                    openChatWithUser(chatWithId);
+                }, 300);
+            }, 200);
+        }
     });
 </script>
 
@@ -475,6 +1141,10 @@
     <div class="footer-nav-item" onclick="loadMyIdeas()">
         <div class="footer-nav-icon">📊</div>
         <div class="footer-nav-text">My Ideas</div>
+    </div>
+    <div class="footer-nav-item" onclick="openChat()">
+        <div class="footer-nav-icon">💬</div>
+        <div class="footer-nav-text">Chat</div>
     </div>
     <div class="footer-nav-item" onclick="goToProfile()">
         <div class="footer-nav-icon">👤</div>

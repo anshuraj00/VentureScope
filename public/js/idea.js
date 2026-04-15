@@ -344,6 +344,14 @@ function createIdeaElement(idea) {
         return typeof dislike === 'string' ? dislike === user._id : dislike._id === user._id;
     }) : false;
 
+    // Calculate rating info
+    const ratings = idea.ratings || [];
+    const totalRatings = ratings.length;
+    const sumRatings = ratings.reduce((sum, r) => sum + (r.rating || 0), 0);
+    const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : 0;
+    const userRating = user && ratings.find(r => r.user && r.user._id === user._id);
+    const userRatingValue = userRating ? userRating.rating : 0;
+
     const profileImage = creator.profileImage ? (creator.profileImage.startsWith('http') ? creator.profileImage : buildImageUrl(creator.profileImage)) : '/images/default-avatar.png';
     const roleLabel = creator.role ? capitalize(creator.role) : 'Founder';
     const category = idea.category || 'Startup';
@@ -394,6 +402,20 @@ function createIdeaElement(idea) {
             <button class="venture-action-btn" onclick="loadComments('${idea._id}')">💬 Comments <span>${idea.comments ? idea.comments.length : 0}</span></button>
             <button class="venture-action-btn" onclick="toggleSaveIdea('${idea._id}')">🔖 Save</button>
         </div>
+        <div class="venture-card-rating">
+            <div class="rating-display">
+                <div class="stars-display">
+                    ${generateStarsDisplay(averageRating)}
+                </div>
+                <span class="rating-text">${averageRating} (${totalRatings} ${totalRatings === 1 ? 'rating' : 'ratings'})</span>
+            </div>
+            <div class="rating-input">
+                <span class="rate-label">Rate this:</span>
+                <div class="stars-input" data-idea-id="${idea._id}">
+                    ${generateStarsInput(idea._id, userRatingValue)}
+                </div>
+            </div>
+        </div>
         <div class="venture-card-footer">
             <p class="venture-caption">${description}</p>
             <div class="venture-footer-meta">
@@ -404,6 +426,33 @@ function createIdeaElement(idea) {
     `;
 
     return ideaDiv;
+}
+
+function generateStarsDisplay(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let stars = '';
+    
+    for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+            stars += '⭐';
+        } else if (i === fullStars + 1 && hasHalfStar) {
+            stars += '⭐'; // For now, we'll use full stars. Could add half-star logic later
+        } else {
+            stars += '☆';
+        }
+    }
+    
+    return stars;
+}
+
+function generateStarsInput(ideaId, userRating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        const isActive = i <= userRating;
+        stars += `<span class="star-input ${isActive ? 'active' : ''}" data-rating="${i}" onclick="rateIdea('${ideaId}', ${i})">★</span>`;
+    }
+    return stars;
 }
 
 function toggleIdeaMenu(id, event) {
@@ -481,6 +530,66 @@ function updateStarDisplay(ideaId, userRating) {
             star.classList.remove('selected');
         }
     });
+}
+
+async function rateIdea(ideaId, rating) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        alert("Please login to rate ideas");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/social/${ideaId}/rate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ rating })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Update the rating display
+            updateIdeaRating(ideaId, result.averageRating, result.totalRatings);
+            // Update user's rating
+            updateUserRating(ideaId, rating);
+            console.log('Rating submitted successfully');
+        } else {
+            alert(result.message || 'Error submitting rating');
+        }
+    } catch (error) {
+        console.error('Error rating idea:', error);
+        alert('Error submitting rating');
+    }
+}
+
+function updateIdeaRating(ideaId, averageRating, totalRatings) {
+    const ideaCard = document.querySelector(`[data-idea-id="${ideaId}"]`);
+    if (!ideaCard) return;
+
+    const starsDisplay = ideaCard.querySelector('.stars-display');
+    const ratingText = ideaCard.querySelector('.rating-text');
+    
+    if (starsDisplay) {
+        starsDisplay.innerHTML = generateStarsDisplay(averageRating);
+    }
+    
+    if (ratingText) {
+        ratingText.textContent = `${averageRating} (${totalRatings} ${totalRatings === 1 ? 'rating' : 'ratings'})`;
+    }
+}
+
+function updateUserRating(ideaId, rating) {
+    const ideaCard = document.querySelector(`[data-idea-id="${ideaId}"]`);
+    if (!ideaCard) return;
+
+    const starsInput = ideaCard.querySelector('.stars-input');
+    if (starsInput) {
+        starsInput.innerHTML = generateStarsInput(ideaId, rating);
+    }
 }
 
 

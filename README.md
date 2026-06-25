@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VentureScope 🚀
 
 VentureScope is a full-stack entrepreneurship and startup collaboration platform that enables users to share, discover, validate, and collaborate on innovative business ideas. Inspired by modern social networking platforms, VentureScope creates a community-driven ecosystem where entrepreneurs, innovators, and aspiring founders can connect and build together.
@@ -225,3 +226,30 @@ GitHub: https://github.com/anshuraj00
 ## ⭐ Support
 
 If you found this project useful, consider giving it a star on GitHub. Your support helps the project grow and reach more developers.
+=======
+# VentureScope
+
+This is a Node.js + Express app with a static frontend served from `public/`.
+
+## Deployment on Render
+
+1. Push this repository to GitHub.
+2. On Render, create a new `Web Service`.
+3. Connect the GitHub repo and choose branch `main`.
+4. Use these values:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Root Directory: `/`
+5. Add environment variables:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - `EMAIL_USER`
+   - `EMAIL_PASS`
+
+The app automatically listens on Render's provided `PORT`.
+
+## Notes
+
+- If `EMAIL_USER` or `EMAIL_PASS` is not set, email sending is skipped and the app continues to work for development.
+- The `render.yaml` manifest is included for Render infrastructure as code.
+>>>>>>> 32a6896 (Prepare app for Render deployment)

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: venturescope
+    env: node
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: /
+    envVars:
+      - key: MONGODB_URI
+      - key: JWT_SECRET
+      - key: EMAIL_USER
+      - key: EMAIL_PASS

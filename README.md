@@ -1,11 +1,10 @@
-<<<<<<< HEAD
-# VentureScope 🚀
+# VentureScope ??
 
 VentureScope is a full-stack entrepreneurship and startup collaboration platform that enables users to share, discover, validate, and collaborate on innovative business ideas. Inspired by modern social networking platforms, VentureScope creates a community-driven ecosystem where entrepreneurs, innovators, and aspiring founders can connect and build together.
 
-## 🌟 Features
+## ?? Features
 
-### 👤 User Management
+### ?? User Management
 
 * User Registration and Login
 * JWT-Based Authentication
@@ -13,7 +12,7 @@ VentureScope is a full-stack entrepreneurship and startup collaboration platform
 * Email Verification using OTP
 * User Profiles
 
-### 💡 Idea Management
+### ?? Idea Management
 
 * Submit Startup Ideas
 * Browse Community Ideas
@@ -21,14 +20,14 @@ VentureScope is a full-stack entrepreneurship and startup collaboration platform
 * Categorized Idea Discovery
 * Idea Approval Workflow
 
-### 💬 Real-Time Communication
+### ?? Real-Time Communication
 
 * Instant Messaging System
 * Real-Time Notifications
 * Socket.IO Powered Communication
 * Community Collaboration Features
 
-### 🛡️ Admin Dashboard
+### ??? Admin Dashboard
 
 * Manage Users
 * Review Submitted Ideas
@@ -36,7 +35,7 @@ VentureScope is a full-stack entrepreneurship and startup collaboration platform
 * Monitor Platform Activity
 * Content Moderation
 
-### 📁 File Uploads
+### ?? File Uploads
 
 * Image Upload Support
 * Startup Idea Attachments
@@ -44,7 +43,7 @@ VentureScope is a full-stack entrepreneurship and startup collaboration platform
 
 ---
 
-## 🏗️ Technology Stack
+## ??? Technology Stack
 
 ### Backend
 
@@ -71,26 +70,26 @@ VentureScope is a full-stack entrepreneurship and startup collaboration platform
 
 ---
 
-## 📂 Project Structure
+## ?? Project Structure
 
 ```text
 VentureScope/
-├── models/
-├── routes/
-├── controllers/
-├── middleware/
-├── uploads/
-├── public/
-├── views/
-├── config/
-├── server.js
-├── package.json
-└── README.md
++-- models/
++-- routes/
++-- controllers/
++-- middleware/
++-- uploads/
++-- public/
++-- views/
++-- config/
++-- server.js
++-- package.json
++-- README.md
 ```
 
 ---
 
-## 🚀 Installation
+## ?? Installation
 
 ### 1. Clone the Repository
 
@@ -124,15 +123,33 @@ EMAIL_PASS=your_email_password
 npm start
 ```
 
-For development:
+---
 
-```bash
-npm run dev
-```
+## ?? Deployment on Render
+
+1. Push this repository to GitHub.
+2. On Render, create a new `Web Service`.
+3. Connect the GitHub repo and choose branch `main`.
+4. Use these values:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Root Directory: `/`
+5. Add environment variables:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - `EMAIL_USER`
+   - `EMAIL_PASS`
+
+The app automatically listens on Render's provided `PORT`.
+
+### Notes
+
+- If `EMAIL_USER` or `EMAIL_PASS` is not set, email sending is skipped and the app continues to work for development.
+- The `render.yaml` manifest is included for Render infrastructure as code.
 
 ---
 
-## 🔐 Authentication Flow
+## ?? Authentication Flow
 
 1. User registers an account.
 2. OTP verification is sent via email.
@@ -142,7 +159,7 @@ npm run dev
 
 ---
 
-## 📡 API Highlights
+## ?? API Highlights
 
 ### Authentication
 
@@ -170,7 +187,7 @@ npm run dev
 
 ---
 
-## 🎯 Future Enhancements
+## ?? Future Enhancements
 
 * AI-Powered Startup Idea Suggestions
 * Startup Team Formation System
@@ -182,7 +199,7 @@ npm run dev
 
 ---
 
-## 🤝 Contributing
+## ?? Contributing
 
 Contributions are welcome.
 
@@ -209,13 +226,13 @@ git push origin feature-name
 
 ---
 
-## 📄 License
+## ?? License
 
 This project is licensed under the MIT License.
 
 ---
 
-## 👨‍💻 Author
+## ????? Author
 
 **Anshu Raj**
 
@@ -223,33 +240,6 @@ GitHub: https://github.com/anshuraj00
 
 ---
 
-## ⭐ Support
+## ? Support
 
 If you found this project useful, consider giving it a star on GitHub. Your support helps the project grow and reach more developers.
-=======
-# VentureScope
-
-This is a Node.js + Express app with a static frontend served from `public/`.
-
-## Deployment on Render
-
-1. Push this repository to GitHub.
-2. On Render, create a new `Web Service`.
-3. Connect the GitHub repo and choose branch `main`.
-4. Use these values:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-   - Root Directory: `/`
-5. Add environment variables:
-   - `MONGODB_URI`
-   - `JWT_SECRET`
-   - `EMAIL_USER`
-   - `EMAIL_PASS`
-
-The app automatically listens on Render's provided `PORT`.
-
-## Notes
-
-- If `EMAIL_USER` or `EMAIL_PASS` is not set, email sending is skipped and the app continues to work for development.
-- The `render.yaml` manifest is included for Render infrastructure as code.
->>>>>>> 32a6896 (Prepare app for Render deployment)
